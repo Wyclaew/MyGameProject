@@ -1,5 +1,6 @@
 #include "collision.h"
 #include "game.h"
+#include "gem.h"
 
 
 
@@ -27,9 +28,10 @@ void Collisions_BulletEnemy(GameData *game){
 
                     //  düşman yok oldu
                     game->enemies[j].active = false;
+
+                    //  xp düşür
+                    Gem_SpawnGem(game, game->enemies[j].pos, 10);   //  10 xplik gem düşür
                     game->score += 1; // skora 1 puan ekle 
-                    // !!!!! ileride xp ve altın düşürme kodu gelicek
-                    //  !!!!!!! ileride sound effect gelicek (patlama sesi)
                     //  mermi bir düşmanı buldu ve yok oldu diğerlerine bakmaya gerek yok döngüden çıkıyoruz
                     break;
                 }

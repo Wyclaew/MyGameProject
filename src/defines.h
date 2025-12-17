@@ -6,9 +6,10 @@
 #include "raylib.h"
 
 //  sabitler
-#define MAX_BULLETS 2000
-#define MAX_ENEMIES 2000
-#define MAX_HIGHSCORE 10
+#define MAX_BULLETS 2000    //  mermi havuzu
+#define MAX_ENEMIES 2000    //  düşman havuzu
+#define MAX_HIGHSCORE 10    //  tabloda ilk kaç skor gözükücek
+#define MAX_GEM 1000    //  ekrandaki maksimum gem
 #define SCREEN_WIDTH 800   //  ekran genişlik
 #define SCREEN_HEIGHT 600   //  ekran yükseklik
 
@@ -19,7 +20,8 @@
 #define ENEMY_FRAME_COUNT 6 //  düşman frame sayısı
 #define PROJECTILE_FRAME_COUNT 6    //   mermi frame sayısı
 #define PLAYER_BOUNDARY 20  //  oyuncu sınırı
-#define INITIAL_SPAWN_INTERVAL 20.0f //  oyun zorluğu
+#define INITIAL_SPAWN_INTERVAL 15.0f //  oyun zorluğu
+#define XP_INTERVAL 1.5f    //  level atlamak gittikçe ne kadar zorlaşsın değeri
 
 
 //  enum kendi değişken türümüzü yaratmamızı sağlıyor
@@ -30,6 +32,15 @@ typedef enum {
     HIGHSCORES, //  skor tablosu ekranı
     GAME_OVER      //  lose ekranı
 } GameState;
+
+
+typedef struct {
+    Vector2 pos;
+    int value;
+    bool active;
+    Color color;
+} Gem;
+
 
 
 //  oyuncu yapısı
@@ -126,12 +137,16 @@ typedef struct {
     Enemy enemies[MAX_ENEMIES]; //  düşmanlar için dizi
     Projectile bullets[MAX_BULLETS];    //  mermiler için dizi
     HighScore highScores[MAX_HIGHSCORE];    //  yüksek skor tablosu
+    Gem gems[MAX_GEM];
     GameSettings settings;  //  ayarlar
     GameState currentState; //  oyunun mevcut menüsü
     UILayout uilayout;  //  butonlar vs
     int score; //   skor sayacı 0
     int letterCount;    //  skortablosu girdisi için harf sayacı
     int enemyWaveSize;  //  düşmanların wave büyüklüğü
+    int currentXP;
+    int requiredXP;
+    int level;
     char inputName[20]; //  skor tablosu isim tutucu
     float waveTimer;    //  wave için zamanı tutucak 0
     float shootTimer;    //  saldırı zamanlayıcısı 0

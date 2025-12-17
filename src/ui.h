@@ -3,6 +3,7 @@
 
 
 #include "defines.h"
+#include "game.h"
 
 
 
@@ -22,6 +23,7 @@ void UI_UpdateGameOver(GameData *game, char *inputName, int *letterCount);
 void UI_DrawHighScores(const GameData *game);
 void UI_DrawDebugInfo(const GameData *game);
 void UI_DrawCenteredText(const char* text, Rectangle rect, int fontSize, Color color);
+void UI_DrawXPBar(const GameData *game);
 
 
 

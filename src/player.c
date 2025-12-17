@@ -5,7 +5,7 @@
 
 void Player_Init(Player *player, GameAssets *assets){
     player->pos = (Vector2){400, 300};
-    player->speed = 300.0f;
+    player->speed = 200.0f;
     player->radius = 20.0f;
     player->scale= 1.5f;
     player->currentFrame = 0;

@@ -13,7 +13,7 @@ void Projectile_FireBullet(GameData *game, Vector2 targetPos){
 
             game->bullets[i].active = true;   //  artık kullanılıyor
             game->bullets[i].pos = game->player.pos; //  oyuncunun olduğu yerden çıkıcak
-            game->bullets[i].speed = 200.0f;   //  mermi hızı
+            game->bullets[i].speed = 300.0f;   //  mermi hızı
             game->bullets[i].radius = 4.0f;   //  mermi büyüklüğü
             game->bullets[i].scale = 1.0f;
 

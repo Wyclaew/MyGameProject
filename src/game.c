@@ -17,8 +17,8 @@ void Game_Init(GameData *game){
 
     //  oyun başlangıç değerleri
     game->currentState = MENU;  //  başlangıçta hangi menüde olucak
-    game->spawnInterval = INITIAL_SPAWN_INTERVAL; //  oyun zorluk değeri
-    game->shootCooldown = 0.5f; //  atış hızımız
+    game->spawnInterval = INITIAL_SPAWN_INTERVAL - 5.0f; //  oyun zorluk değeri
+    game->shootCooldown = 0.8f; //  atış hızımız
     game->enemyWaveSize = 5;    //  başlangıçta 5 düşman 
     game->assets.playerTexture = LoadTexture("player_cat_walk.png");
     game->assets.enemyTexture = LoadTexture("enemy_walk.png");

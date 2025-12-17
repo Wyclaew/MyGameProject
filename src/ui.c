@@ -18,64 +18,27 @@
 
 
 void UI_InitLayout(GameData *game){   //  butonları yerleştirme
-    //  ekranın merkezini bul (sonradan boyut değişince otomatik ayarlanması için)
-    float centerX = (float)SCREEN_WIDTH / 2;
-    float startY = 250.0f;  //  ilk butonun y konumu
-    float buttonWidth = 220.0f; //  buton genişlikleri
-    float buttonHeight = 50.0f;  //  buton yükseklikleri
-    float gap = 20.0f;   //  butonlar arası boşluk
 
-    //  play butonu
-    game->uilayout.playButton = (Rectangle){
-        centerX - (buttonWidth / 2),    //  butonun tam ortalanması için buton genişliğinin yarısını ekran genişliğinin yarısından çıkarıyoruz
-        startY,
-        buttonWidth,
-        buttonHeight
-    };
+    Vector2 mousePoint = GetMousePosition();
 
-    //  settings butonu
-    game->uilayout.settingsButton = (Rectangle){
-        centerX - (buttonWidth / 2),
-        startY + buttonHeight + gap,
-        buttonWidth,
-        buttonHeight
-    };
-
-
-    //  skor butonu
-    game->uilayout.scoresButton = (Rectangle){
-        centerX - (buttonWidth / 2),
-        startY + (buttonHeight + gap) * 2,
-        buttonWidth,
-        buttonHeight
-    };
-
-    //  exit butonu
-    game->uilayout.exitButton = (Rectangle){
-        centerX - (buttonWidth / 2),
-        startY + (buttonHeight + gap) * 3,
-        buttonWidth,
-        buttonHeight
-    };
-
-    //  github butonu
-    game->uilayout.githubButton = (Rectangle){
-        20, SCREEN_HEIGHT -40, 100, 30
-    };
     
-    //  mute butonu
-    game->uilayout.muteButton = (Rectangle) {
-        SCREEN_WIDTH - 130,
-        SCREEN_HEIGHT -40,
-        100,
-        30
-    };
+    int sw = GetScreenWidth();
+    int sh = GetScreenHeight();
 
-    //  oyun ismi
-    game->uilayout.titlePos = (Vector2){
-        centerX,
-        100
-    };
+    //  butonları merkeze dizme
+    float btnWidth = sw * 0.29f; //  buton genişlikleri ölçeklendirmesi
+    float btnHeight = sh * 0.09f;   //  buton yüksekliği ölçeklendirmesi
+    float startY = sh * 0.4f;   //  butonların başlayacağı yükseklik
+    float gap = sh * 0.02f; //  butonlar arası boşluk
+    float margin = 20.0f;    //  köşelerden bırakılacak boşluk
+    float sBtnSize = 50.0f;  //  küçük ikonların buton genişliği
+
+    game->uilayout.playButton = (Rectangle){(float)(sw - btnWidth) / 2, startY, btnWidth, btnHeight};
+    game->uilayout.settingsButton =(Rectangle){(float)(sw - btnWidth) / 2, startY + (btnHeight + gap), btnWidth, btnHeight};
+    game->uilayout.scoresButton =(Rectangle){(float)(sw - btnWidth) / 2, startY + (2 * (btnHeight + gap)), btnWidth, btnHeight};
+    game->uilayout.exitButton =(Rectangle){(float)(sw -btnWidth) / 2, startY + (3 *(btnHeight + gap)), btnWidth, btnHeight};
+    game->uilayout.githubButton =(Rectangle){margin, (float)sh - sBtnSize - margin, sBtnSize, sBtnSize};
+    game->uilayout.muteButton =(Rectangle){margin, margin, sBtnSize, sBtnSize};
 
 }
 
@@ -84,48 +47,71 @@ void UI_InitLayout(GameData *game){   //  butonları yerleştirme
 
 void UI_DrawMenu(const GameData *game){
 
+    int sw = SCREEN_WIDTH;
+    int sh = SCREEN_HEIGHT;
+    Vector2 mousePoint = GetMousePosition();
+
     //  ana başlık
     const char* title = "Circle Survivor";
-    int titleSize = 60;
+    int titleSize = (int)(sh * 0.1f);   //  oyun ismi yüksekliğin %10 u kadar
     int titleWidth = MeasureText(title, titleSize);
-    int titleHeight = 80;
     Color titleColor = GOLD;
-    DrawText(title, (SCREEN_WIDTH - titleWidth) / 2, titleHeight, titleSize, titleColor);
+    DrawText(title, (sw - titleWidth) / 2, sh * 0.15f, titleSize, titleColor);
 
     //  alt başlık
-        DrawText("beta v1.0", SCREEN_WIDTH - 100, SCREEN_HEIGHT - 30, 15, LIGHTGRAY);
+    DrawText("beta v2.0", sw - 100, sh - 30, 15, LIGHTGRAY);
+
+    float btnWidth = sw * 0.1f; //  buton genişlikleri ölçeklendirmesi
+    float btnHeight = sh * 0.1f;   //  buton yüksekliği ölçeklendirmesi
+    float startY = sh * 0.4f;   //  butonların başlayacağı yükseklik
+    float gap = sh * 0.02f; //  butonlar arası boşluk
+    float margin = 20.0f;    //  köşelerden bırakılacak boşluk
+    float sBtnSize = 50.0f;  //  küçük ikonların buton genişliği
+
+    Color colorPlay = CheckCollisionPointRec(mousePoint, game->uilayout.playButton) ? BEIGE : LIGHTGRAY;
+    Color colorSetting = CheckCollisionPointRec(mousePoint, game->uilayout.settingsButton) ?  BEIGE : LIGHTGRAY;
+    Color colorScore = CheckCollisionPointRec(mousePoint, game->uilayout.scoresButton) ? BEIGE : LIGHTGRAY;
+    Color colorExit = CheckCollisionPointRec(mousePoint, game->uilayout.exitButton) ? BEIGE : LIGHTGRAY;
+    Color colorGithub = CheckCollisionPointRec(mousePoint, game->uilayout.githubButton) ? BEIGE : LIGHTGRAY;
+    Color colorMute = CheckCollisionPointRec(mousePoint, game->uilayout.muteButton) ? BEIGE : LIGHTGRAY;
+
 
     //  butonları çizme basit dikdörtgenler
     //  play butonu
-    DrawRectangleRec(game->uilayout.playButton, GetColor(0xF5F5DCFF) );
-    UI_DrawCenteredText("PLAY", game->uilayout.playButton, 20, BLACK);
+    DrawRectangleRec(game->uilayout.playButton, colorPlay);
+    UI_DrawCenteredText("PLAY", game->uilayout.playButton, (int)(btnHeight * 0.5f), BLACK);
 
     //  settings butonu
-    DrawRectangleRec(game->uilayout.settingsButton, GetColor(0xF5F5DCFF)); 
-    UI_DrawCenteredText("SETTINGS", game->uilayout.settingsButton, 20, BLACK);
+    DrawRectangleRec(game->uilayout.settingsButton, colorSetting);
+    UI_DrawCenteredText("SETTINGS", game->uilayout.settingsButton, (int)(btnHeight * 0.5f), BLACK);
 
-    //  skor butonu
-    DrawRectangleRec(game->uilayout.scoresButton, GetColor(0xF5F5DCFF)); 
-    UI_DrawCenteredText("HIGH SCORES", game->uilayout.scoresButton, 20, BLACK);
+    //  skor tablosu butonu
+    DrawRectangleRec(game->uilayout.scoresButton, colorScore);
+    UI_DrawCenteredText("HIGH SCORES", game->uilayout.scoresButton, (int)(btnHeight * 0.5f), BLACK);
 
-    //  exit butonu
-    DrawRectangleRec(game->uilayout.exitButton, GetColor(0xF5F5DCFF)); 
-    UI_DrawCenteredText("EXIT GAME", game->uilayout.exitButton, 20, BLACK);
+    //  oyundan çıkma butonu
+    DrawRectangleRec(game->uilayout.exitButton, colorExit);
+    UI_DrawCenteredText("EXIT GAME", game->uilayout.exitButton, (int)(btnHeight * 0.5f), BLACK);
 
     //  github butonu
-    DrawRectangleRec(game->uilayout.githubButton, BLUE);
-    UI_DrawCenteredText("GitHub", game->uilayout.githubButton, 20, WHITE);
+    DrawRectangleRec(game->uilayout.githubButton, colorGithub);
+    UI_DrawCenteredText("GitHub", game->uilayout.githubButton, (int)(btnHeight * 0.5f), WHITE);
 
     //  mute butonu
-    DrawRectangleRec(game->uilayout.muteButton, LIGHTGRAY);
-    UI_DrawCenteredText("MUTE", game->uilayout.muteButton, 10, DARKGRAY);
+    DrawRectangleRec(game->uilayout.muteButton, colorMute);
+    UI_DrawCenteredText("MUTE", game->uilayout.muteButton, (int)(btnHeight * 0.2f), DARKGRAY);
 }
 
 
 
 void UI_UpdateMenu(GameData *game){
 
-        Vector2 mousePoint = GetMousePosition();
+    Vector2 mousePoint = GetMousePosition();
+
+    
+    int sw = SCREEN_WIDTH;
+    int sh = SCREEN_HEIGHT;
+
 
     //  play butonu basış kontrolü
     if(CheckCollisionPointRec(mousePoint, game->uilayout.playButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
@@ -146,7 +132,7 @@ void UI_UpdateMenu(GameData *game){
 
     //  githuba butonu basış kontrolü
     if(CheckCollisionPointRec(mousePoint, game->uilayout.githubButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
-        OpenURL("https://github.com/Wyclaew/MyGameProject");
+        OpenURL("https://github.com/Wyclaew");
     }
 
     //  mute butonu basış kontolü
@@ -174,16 +160,50 @@ void UI_UpdateMenu(GameData *game){
 
 
 void UI_DrawSettings(const GameData *game){
-    DrawText("SETTINGS", 350, 100, 30, DARKGRAY);
 
-    //  slider çizimi
-    DrawRectangle(300, 200, 200, 20, LIGHTGRAY);    //  arka çubuk
+    int sw = GetScreenWidth();
+    int sh = GetScreenHeight();
 
-    //  doluluk oranı
-    DrawRectangle(300, 200, (int)(game->settings.masterVolume * 200), 20, GREEN);
-    DrawText("Master Volume", 300, 180, 20, GRAY);
+    //  yarı saydam arka plan
+    DrawRectangle(0, 0, sw, sh, Fade(BLACK, 0.7f));
 
-    DrawText("Press B to go back", 300, 500, 20, DARKGRAY);
+
+    //  ana panel (ortadaki kutu)
+    float panelW = sw * 0.6f;
+    float panelH = sh * 0.6f;
+    Rectangle panel = {(sw - panelW) / 2, (sh - panelH) / 2, panelW, panelH};
+
+    const char* text = "SETTINGS";
+    int fontSize = 40;
+    int textW = MeasureText(text, fontSize);
+    DrawText(text, panel.x + (panelW - textW) / 2, panel.y + 20, fontSize, WHITE);
+
+    //  panel içinde slider
+    float sliderW = panelW* 0.8f;
+    float sliderH = 30;
+    Rectangle sliderRect = {
+        panel.x + (panelW - sliderW) / 2,
+        panel.y + 160,
+        sliderW,
+        sliderH
+    };
+
+    //  slider arka planı
+    DrawRectangleRec(sliderRect, LIGHTGRAY);
+
+    //  slider doluluğu
+    DrawRectangle(sliderRect.x, sliderRect.y, sliderRect.width * game->settings.masterVolume, sliderRect.height, GREEN);
+
+    //  slider çerçevesi
+    DrawRectangleLinesEx(sliderRect, 2.0f, GRAY);
+
+    //  etiket
+    DrawText("Master Volume", sliderRect.x, sliderRect.y - 25, 20, GRAY);
+    DrawText(TextFormat("%d%%", (int)game->settings.masterVolume * 100), sliderRect.x + sliderRect.width + 10, sliderRect.y + 5, 20, BLACK);
+
+    //  back butonu panelin altında
+    DrawText("Press B to back", panel.x + (panelW - MeasureText("Press B to back", 20)) / 2, panel.y + panelH - 40, 20, GRAY);
+
 }
 
 
@@ -232,7 +252,7 @@ void UI_DrawGameOver(const GameData *game){
     DrawText(TextFormat("Your Score : %i", game->score), 320, 160, 30, BLACK);
 
     if (game->isNewHighScore){
-        DrawText("NEW RECORD! What's your name, warrior?", 250, 250, 20, GOLD);
+        DrawText("NEW RECORD! What's your name, warrior?", 200, 250, 20, GOLD);
         //  input kutusu
         DrawRectangle(300, 280, 200, 40, LIGHTGRAY);
         DrawText(game->inputName, 310, 290, 20, BLACK);
@@ -289,4 +309,35 @@ void UI_DrawCenteredText(const char* text, Rectangle rect, int fontSize, Color c
     int textX = rect.x + (rect.width - textWidth) / 2;
     int textY = rect.y + (rect.height - fontSize) / 2;
     DrawText(text, textX, textY, fontSize, color);
+}
+
+
+void UI_DrawXPBar(const GameData *game){
+    int sw = GetScreenWidth();
+    int barHeight = 20;
+
+    // barın arkası boş bar
+    DrawRectangle(0, 0, sw, barHeight, LIGHTGRAY);
+
+    //  dolu bar 
+    float ratio = (float)game->currentXP / (float)game->requiredXP;
+
+    //  barın taşmasını önle
+    if(ratio > 1.0f) ratio = 1.0f;
+
+    //  barın dolması
+    DrawRectangle(0, 0, (sw * ratio), barHeight, DARKGREEN);
+
+    //  level yazısı
+    const char* levelText = TextFormat("LEVEL : %d", game->level);
+    int fontSize = 20;
+    int margin = 20;    //  köşelerden ne kadar içerde duracağı
+
+    //  yazının ekrandaki genişkiği
+    int textWidth = MeasureText(levelText, fontSize);
+    int posX = sw - textWidth - margin;
+    int posY = margin;
+
+    // çiz
+    DrawText(levelText, posX, posY, fontSize, GOLD);
 }
