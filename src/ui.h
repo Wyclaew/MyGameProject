@@ -24,6 +24,8 @@ void UI_DrawHighScores(const GameData *game);
 void UI_DrawDebugInfo(const GameData *game);
 void UI_DrawCenteredText(const char* text, Rectangle rect, int fontSize, Color color);
 void UI_DrawXPBar(const GameData *game);
+void UI_UpdateLevelUp(GameData *game);
+void UI_DrawLevelUp(const GameData *game);
 
 
 

@@ -4,6 +4,8 @@
 #include "projectile.h"
 #include "collision.h"
 #include "ui.h"
+#include "gem.h"
+#include "upgrade_pool.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -17,12 +19,16 @@ void Game_Init(GameData *game){
 
     //  oyun başlangıç değerleri
     game->currentState = MENU;  //  başlangıçta hangi menüde olucak
-    game->spawnInterval = INITIAL_SPAWN_INTERVAL - 5.0f; //  oyun zorluk değeri
+    game->spawnInterval = INITIAL_SPAWN_INTERVAL - 3.0f; //  oyun zorluk değeri
     game->shootCooldown = 0.8f; //  atış hızımız
     game->enemyWaveSize = 5;    //  başlangıçta 5 düşman 
     game->assets.playerTexture = LoadTexture("player_cat_walk.png");
     game->assets.enemyTexture = LoadTexture("enemy_walk.png");
     game->assets.bulletTexture = LoadTexture("bullet_fired.png");
+    game->assets.gemTexture = LoadTexture("xp_gem.png");
+    game->requiredXP = 100;
+    game->level = 1;
+    game->currentXP = 0;
 
     //  ses ayarları
     game->settings.masterVolume = 1.0f; //  ana ses seviyesi
@@ -54,6 +60,9 @@ void Game_Init(GameData *game){
     // high score tablosunu yükle
     Game_LoadHighScores(game);
 
+    //  gemleri hazırla
+    Gem_Init(game);
+
     //  düşmanları hazırla
     Enemy_Init(game);
 
@@ -70,11 +79,16 @@ void Game_Update(GameData *game, float dt){
 
             case GAMEPLAY:
             Player_Update(&game->player, dt);   //  oyuncu hareketi
+            Gem_UpdateGems(game,dt);    //  gem matematiği efektleri
             Game_WaveSpawner(game, dt); //  wave spawner
             Enemy_Update(game, dt); //  düşman ai update
             Projectile_UpdateBullet(game, dt);   //  mermi hareketi
             Game_ShootingSystem(game, dt);  //  otomatik ateş sistemi
             Collisions_CheckAll(game);  //  carpışma kontrolü
+            break;
+
+            case LEVEL_UP:
+            UI_UpdateLevelUp(game);
             break;
 
 
@@ -122,6 +136,12 @@ void Game_Draw(const GameData *game){
             UI_DrawGameplay(game);
             break;
 
+            //  level atlama ekranı çizimi
+            case LEVEL_UP:
+            UI_DrawGameplay(game);  // arkada oyun görünsün donmuş halde
+            UI_DrawLevelUp(game);
+            break;
+
             //  oyun bitişi
             case GAME_OVER:
             UI_DrawGameOver(game);
@@ -161,9 +181,10 @@ void Game_ShootingSystem(GameData *game, float dt){
 
             game->shootTimer += dt;   //  sayacı arttırma
             
+             //  en yakın düşmanı bul
             if(game->shootTimer >= game->shootCooldown){
-                int nearestEnemyIndex = -1; //  en yakın düşmanı bul
-                float minDistance = 9999999.0f;
+                int nearestEnemyIndex = -1; //  henüz düşman bulunmadı (-1 geçersiz sayı)
+                float minDistance = 9999999.0f; //  başlangıçta en kısa mesafeyi çok büyük yapıyoruz
                 for (int i = 0; i < MAX_ENEMIES; i++){  //  sadece aktif ve varsayılan düşmanlara bakacağız
                     if(!game->enemies[i].active) continue;
 
@@ -172,8 +193,8 @@ void Game_ShootingSystem(GameData *game, float dt){
                     float dist = sqrt(dx * dx + dy * dy);
                 
                     if(dist < minDistance){
-                        minDistance = dist;
-                        nearestEnemyIndex = i;
+                        minDistance = dist; //  yeni en kısa mesafeyi bulduk
+                        nearestEnemyIndex = i;  //  en yakın düşmanın kimliği
                     }
                 }
                 //  eğer düşman bulduysan ateşle
@@ -227,9 +248,10 @@ void Game_UpdateGameOver(GameData *game){
         //  karakter yakalama mantığı
         int key = GetCharPressed();
         while (key > 0) {
-            if ((key >= 32) && (key <= 125) && (game->letterCount < 10)){
+            if ((key >= 32) && (key <= 125) && (game->letterCount < 10)){   //  sadece yazılabilir karakterleri alıcaz
                 game->inputName[game->letterCount] = (char) key;
-                game->inputName[game->letterCount+1] ='\0'; //  string sonlandırıcı
+                //  her harf eklendiğinde \0 (string sonlandırıcı) eklenerek c dilinin metni nerede bitireceğini bilmesi sağlıyoruz
+                game->inputName[game->letterCount+1] ='\0';
                 game->letterCount++;
             }
             key = GetCharPressed(); //  sıradaki tuşu al
@@ -246,7 +268,7 @@ void Game_UpdateGameOver(GameData *game){
             game->highScores[MAX_HIGHSCORE -1].score = game->score;  //  globl skor değişkeni
             TextCopy(game->highScores[MAX_HIGHSCORE-1].player_name, game->inputName);
 
-            //  skor sırlama
+            //  skor sırlama (bubble sort) listeyi tarayarak en yükseği 0. indekse çıkarıyoruz
             for (int i = 0; i < MAX_HIGHSCORE; i++){
                 for (int j = 0; j < MAX_HIGHSCORE-i-1; j++){
                     if (game->highScores[j].score < game->highScores[j+1].score){
@@ -256,6 +278,7 @@ void Game_UpdateGameOver(GameData *game){
                     }
                 }
             }
+            //  yeni listeyi kalıcı olarak kaydediyoruz
             Game_SaveHighScores(game);
             game->isNewHighScore = false;
             game->currentState = HIGHSCORES;  //  kaydettikten sonra skorları gösteriyo
@@ -288,7 +311,7 @@ void Game_Reset(GameData *game){
         game->bullets[i].active = false;
     }
 
-    //  başlar başlamaz düşman doğması için
+    //  başlar başlamaz düşman doğması için sayacı ilerden başlatıyoruz
     game->waveTimer = game->spawnInterval;
     
     game->shootTimer = 0;
@@ -301,18 +324,22 @@ void Game_Reset(GameData *game){
 
     // skor sıfırla
     game->score = 0;
+
+    //  eski gemleri silmek için
+    Game_Init(game);
     
 }
 
 
 
 void Game_LoadHighScores(GameData *game){
-    FILE *scoreFile = fopen("high_scores.dat", "rb");
+    //  program bazı bytlerı satır sonu karakteri sanmasın diye rb kullandık 0 ve 1 olarak olduğu gibi okuyor
+    FILE *scoreFile = fopen("high_scores.dat", "rb");   //  rb ile dosyayı byte byte okuyoruz
     if(scoreFile == NULL){
         //  dosya yoksa listeyi sıfırla 
         for (int i = 0; i < MAX_HIGHSCORE; i++){
             game->highScores[i].score = 0;
-            TextCopy(game->highScores[i].player_name, "----"); 
+            TextCopy(game->highScores[i].player_name, "---- "); 
         }
         return;
     }
@@ -325,6 +352,7 @@ void Game_LoadHighScores(GameData *game){
 
 
 void Game_SaveHighScores(const GameData *game){
+    //  rb yi kullanabilmek için direkt wb şekilde yazmamız gerekiyor
     FILE *scoreFile = fopen("high_scores.dat", "wb");
     if(scoreFile != NULL){
         fwrite(game->highScores, sizeof(HighScore), MAX_HIGHSCORE, scoreFile);
@@ -338,6 +366,7 @@ void Game_CheckAndSaveScore(GameData *game, int newScore){
     //  skor ilk 10 skora giriyor mu kontrol et
     if(newScore > game->highScores[MAX_HIGHSCORE-1].score){
         game->isNewHighScore = true;
+
         //  stringi temizle
         game->letterCount = 0;
         game->inputName[0] = '\0';
@@ -351,4 +380,51 @@ void Game_Cleanup(GameData *game){
     UnloadTexture(game->assets.playerTexture);
     UnloadTexture(game->assets.enemyTexture);
     UnloadTexture(game->assets.bulletTexture);
+    UnloadTexture(game->assets.gemTexture);
+}
+
+
+void Game_GenerateUpgrades(GameData *game){
+    for (int i = 0; i < 3; i++){
+        //  havuzdan rastgele bir kart sç
+        int randomIndex = GetRandomValue(0, UPGRADE_POOL_SIZE -1);
+        game->activeUpgrades[i] = upgradePool[randomIndex];
+    }
+    
+}
+
+
+//  hız ekleme yardımcı fonksiyonu
+void Game_ApplyMoveSpeed(Player *player, float percentage){
+    player->speed = (1.0f * percentage);
+
+    //  yürüme hızını limitle
+    if(player->speed > MAX_PLAYER_SPEED) player->speed = MAX_PLAYER_SPEED;
+}
+
+//  atış hızı azaltma yardımcı fonksiyonu
+void Game_ApplyAttackSpeed(GameData *game, float percentage){
+    game->shootCooldown = (1.0f - percentage);
+
+    //  atış hızını limitle
+    if(game->shootCooldown < MAX_SHOOT_COOLDOWN) game->shootCooldown = MAX_SHOOT_COOLDOWN;
+}
+
+
+void Game_ApplyUpgrade(GameData *game, int index){
+    UpgradeDef selected = game->activeUpgrades[index];
+
+    switch (selected.type){
+        case UPGRADE_ATTACK_SPEED:
+        Game_ApplyAttackSpeed(game, selected.value);
+        break;
+
+        case UPGRADE_MOVEMENT_SPEED:
+        Game_ApplyMoveSpeed(&game->player, selected.value);
+        break;
+
+
+        // damage vs gelicek --------------------
+    
+    }
 }

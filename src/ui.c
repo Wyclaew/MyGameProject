@@ -6,12 +6,7 @@
 #include "collision.h"
 #include "defines.h"
 #include "game.h"
-
-
-
-
-
-
+#include "gem.h"
 
 
 
@@ -237,7 +232,11 @@ void UI_DrawGameplay(const GameData *game){
     Projectile_DrawBullet(game);
 
             //  skor tablosu
-            DrawText(TextFormat("SCORE : %i", game->score), 10, 10, 20, GOLD); 
+            DrawText(TextFormat("SCORE : %i", game->score), 20, 40, 20, GOLD); 
+
+    Gem_DrawGem(game);
+
+    UI_DrawXPBar(game);
 
     Enemy_Draw(game);
 
@@ -317,7 +316,7 @@ void UI_DrawXPBar(const GameData *game){
     int barHeight = 20;
 
     // barın arkası boş bar
-    DrawRectangle(0, 0, sw, barHeight, LIGHTGRAY);
+    DrawRectangle(0, 0, sw, barHeight, Fade(LIGHTGRAY, 0.5f));
 
     //  dolu bar 
     float ratio = (float)game->currentXP / (float)game->requiredXP;
@@ -325,13 +324,28 @@ void UI_DrawXPBar(const GameData *game){
     //  barın taşmasını önle
     if(ratio > 1.0f) ratio = 1.0f;
 
+    //  bar efektleri
     //  barın dolması
-    DrawRectangle(0, 0, (sw * ratio), barHeight, DARKGREEN);
+    Color barColor = GREEN;
+
+    //  eğer bar dolduysa veya level up ekranındaysak rainbow efekti ver
+    if(ratio >= 1.0f || game->currentState == LEVEL_UP){
+        //  zamanı kullanrak sürekli değişen bir hue değeri üret
+        //  rainbow efekt hızı gettime * 800 hızı belirler
+        //  360 değeri ile mod alarak renk çemberinde dönmeyi sağla
+        float hue = (float)((int)(GetTime() * 800) % 360);
+        barColor = ColorFromHSV(hue, 0.8f, 1.0f);   //  parlak canlı renkler
+    }
+    //  barın dolu kısmı
+    DrawRectangle(0, 0, (sw * ratio), barHeight, barColor);
+
+    //  barın çerçevisi
+    DrawRectangleLines(0, 0, sw, barHeight, BLACK);
 
     //  level yazısı
     const char* levelText = TextFormat("LEVEL : %d", game->level);
     int fontSize = 20;
-    int margin = 20;    //  köşelerden ne kadar içerde duracağı
+    int margin = 25;    //  köşelerden ne kadar içerde duracağı
 
     //  yazının ekrandaki genişkiği
     int textWidth = MeasureText(levelText, fontSize);
@@ -340,4 +354,131 @@ void UI_DrawXPBar(const GameData *game){
 
     // çiz
     DrawText(levelText, posX, posY, fontSize, GOLD);
+}
+
+
+void UI_UpdateLevelUp(GameData *game){
+    //  oyunu arkada durdurmamız lazım unutma mainde hallet
+    float sw = GetScreenWidth();
+    float sh = GetScreenHeight();
+
+    //  kartların dinamik boyut hesabı
+    float cardW = sw * 0.22f;   //  kartların genişliği
+    float cardH = sh * 0.22f;   //  kartların yüksekliği
+    float gap = sw * 0.03f; //  kartlar arası boşluk
+    
+    //  başlngıç x noktası
+    float totalWidth = (3 * cardW) + (2 * gap);
+    float startX = (sw - totalWidth) / 2.0f;    //  başlangıç x pozisyonu
+    float startY = (sh - cardH) / 2.0f; //  başlngıç y pozisyonu
+
+    Vector2 mousePos = GetMousePosition();
+
+    for (int i = 0; i < 3; i++){
+        //  her kartın o ankki pozisyonu
+        Rectangle cardRect = {
+            startX + i *(cardW + gap),
+            startY,
+            cardW,
+            cardH
+        };
+
+        //  tıklama kontrolü
+        if(CheckCollisionPointRec(mousePos, cardRect)){
+            if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+            //  upgrade kartı seçme efekti eklenebilir
+            Game_ApplyUpgrade(game, i);
+            }
+        }
+    }
+}
+
+
+
+void UI_DrawLevelUp(const GameData *game){
+    float sw = GetScreenWidth();
+    float sh = GetScreenHeight();
+
+    //  arka planı karart
+    DrawRectangle(0, 0, (int)sw, (int)sh, Fade(BLACK, 0.85f));
+
+    //  dinamik yazılar
+    int titleSize = (int)(sh * 0.8f);    //  ekran yüksekliğinin %8 i kadar
+    int subTitleSize = (int)(sh * 0.03f);   //  ekran yüksekliğinin %3 ü kadar
+
+    //  başlıkları çiz
+    UI_DrawCenteredText("LEVEL UP!", (Rectangle){0, sh * 0.1f, sw, (float)titleSize}, titleSize, GOLD);
+
+    //  alt başlık biraz daha aşağısında
+    UI_DrawCenteredText("Choose your destiny", (Rectangle){0, sh * 0.18f, sw, (float)subTitleSize},subTitleSize, LIGHTGRAY);
+
+    //  kart boyutları update ile aynı olmalı
+    float cardW = sw * 0.22f;
+    float cardH = sh * 0.50f;
+    float gap = sw * 0.03f;
+
+    float totalWidth = (3 * cardW) + (2 * gap);
+    float startX = (sw - totalWidth) / 2.0f;
+    float startY = (sh - cardH) / 2.0f;
+
+    Vector2 mouse = GetMousePosition();
+
+    for (int i = 0; i < 3; i++){
+        float x = startX  + i *(cardW + gap);
+        float y = startY;
+        float w = cardW;
+        float h = cardH;
+
+        //  hover animasyonu
+        // mouse üstündeyse kartı %5 büyüt
+        bool isHover = CheckCollisionPointRec(mouse, (Rectangle){x, y, w, h});
+
+        if(isHover){
+            float scaleFactor = 1.05f;
+            float newW = w * scaleFactor;
+            float newH = h * scaleFactor;
+
+            //  merkezden büyütme matematiği
+            x -= (newW - w) / 2;
+            y -= (newH - h) / 2;
+            w = newW;
+            h = newH;
+        }
+
+        Rectangle cardRect = {x, y, w, h};
+        //  hover efektinde kartın arka plan renk değişimi
+        Color cardBg = isHover ? RAYWHITE : LIGHTGRAY;
+        Color borderColor = isHover ? GOLD : DARKGRAY;
+
+        //  kart çizimi
+        DrawRectangleRounded(cardRect, 0.1f, 10, cardBg);   //  rounded kenarlarını yuvarlaklı yapar
+        DrawRectangleRoundedLines(cardRect, 0.1f, 10, borderColor);  //  kartın sınırlarının çizimi
+
+        //  kart içeriği
+        float iconRadius = w * 0.15f;   //  kart genişliğinin %15i kadar yarıçap
+        Color iconColor = (game->activeUpgrades[i].type == UPGRADE_ATTACK_SPEED) ? RED : SKYBLUE;
+        //  damage türü olursa rengi burda olucak
+        DrawCircle(x + w/2, y + h * 0.2f, iconRadius, iconColor);
+
+        // kart genişliğine göre font boyutu
+        int nameSize = (int)(w * 0.1f); //  kartın %10 u kadar font
+
+        //  ismi ortala ve yazdır
+        int nameWidth = MeasureText(game->activeUpgrades[i].title, nameSize);
+        DrawText(game->activeUpgrades[i].title, x + (w - nameWidth) / 2, y + h * 0.4f, nameSize, BLACK);
+
+        //  açıklamayı yazdır
+        int decSize = (int)(w * 0.07f); //  daha küçük font
+
+        //  metni sığdırmak için rectangle sınırlarını belirliyoruz
+        Rectangle textBound = {
+            x + (w * 0.1f), //  soldan %10 boşluk
+            y + (h * 0.55f),    //yarıdn biraz aşağıda başla
+            w * 0.8f,   //  genişliğin %80 ini kullan
+            h * 0.4f    //  alt kısıma kadar kullan
+        };
+        
+        //  font spacing (harf aralığı)
+        DrawTextRec(GetFontDefault(), game->activeUpgrades[i].description, (float)decSize, 1.0f, true, DARKGRAY);
+    }
 }

@@ -20,7 +20,11 @@ void Game_Cleanup(GameData *game);  //  kapanış ve belleği temizleme
 void Game_UpdateGameOver(GameData *game);  //  ölüm ekranı içi hesaplama işleri
 void Game_WaveSpawner(GameData *game, float dt); //  düşmanlar için wave kontrolü
 void Game_ShootingSystem(GameData *game, float dt);    //  en yakın düşmana ateş etme vs. mekanikleri
-
+void Game_GeneratesUpgrade(GameData *game); //  rastgele upgrade seçme
+void Game_ApplyUpgrade(GameData *game, int index);
+void Game_ApplyAttackSpeed(GameData *game, float percentage);
+void Game_ApplyMoveSpeed(Player *player, float percentage);
+void Game_GenerateUpgrades(GameData *game);
 
 //  yardımcı fonskiyonlar
 Vector2 Game_GetSafeSpawnPosition(Vector2 playerPos, float minDistance); //  düşmanların oyuncunun içinde doğmaması için safespawn noktası alma

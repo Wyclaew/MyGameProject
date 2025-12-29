@@ -10,9 +10,6 @@ void Enemy_Init(GameData *game){
     for (int i = 0; i < MAX_ENEMIES; i++){
         game->enemies[i].scale = 1.0f;
         game->enemies[i].currentFrame = 0;
-        game->enemies[i].frameCounter = 0.0f;
-        game->enemies[i].frameSpeed = 6.0f;
-        game->enemies[i].facingRight = true;
         game->enemies[i].active = false;
 
          //  animasyon başlangıç ayarları
@@ -21,14 +18,10 @@ void Enemy_Init(GameData *game){
         game->enemies[i].facingRight = true;
 
 
-           //  texture genişliğini kare sayısıan bölüyoruz
-            float frameWidth =(float)game->assets.enemyTexture.width / ENEMY_FRAME_COUNT;
-            game->enemies[i].frameRec = (Rectangle) {0.0f, 0.0f, frameWidth, (float)game->assets.enemyTexture.height};
-
-
+        //  texture genişliğini kare sayısıan bölüyoruz
+        float frameWidth =(float)game->assets.enemyTexture.width / ENEMY_FRAME_COUNT;
+        game->enemies[i].frameRec = (Rectangle) {0.0f, 0.0f, frameWidth, (float)game->assets.enemyTexture.height};
     }
-    
-
 }
 
 //  tek bir düşman yaratma
@@ -55,6 +48,7 @@ void Enemy_Draw(const GameData *game){
                 //  sadece aktif düşmanları çiz
                 if(!game->enemies[i].active) continue;
 
+                //  yüklediğimiz texture ün neresi kesilecek
                 Rectangle source = game->enemies[i].frameRec;
 
                 //  texture öçeklendirmesi
@@ -72,16 +66,16 @@ void Enemy_Draw(const GameData *game){
                 }
 
                 Rectangle dest = {
-                    game->enemies[i].pos.x,
-                    game->enemies[i].pos.y,
-                    (float)scaledHeight,
-                    (float)scaledWidth
+                    game->enemies[i].pos.x, //  texture oyun içinde hangi x kordinatında olucak
+                    game->enemies[i].pos.y, //  texture oyun içinde hangi y kordinatında olucak
+                    (float)scaledWidth, //  texture ün oyun içindeki genişliği ne kadar olucak
+                    (float)scaledHeight  //  texture ün oyun içindeki yüksekliği ne kadar olucak
                 };
 
                 //  texture ü merkeze al
                 Vector2 origin = {scaledWidth / 2, scaledHeight / 2};
 
-                //  düşmanı cizdirme
+                //  düşmanı cizdirme    (0.0f döndürme açısı) resmin orijinal renklerini korumak için renge white yazdık
                 DrawTexturePro(game->assets.enemyTexture, source, dest, origin, 0.0f, WHITE);
             }
         
@@ -92,7 +86,7 @@ void Enemy_Draw(const GameData *game){
 void Enemy_Update(GameData *game, float dt){
     
 
-            //  döngü ile ekrandaki tüm düşmanları tek tek kontrol etme
+            //  döngü ile ekrandaki tüm düşmanları tek tek kontrol et
             for (int i = 0; i < MAX_ENEMIES; i++){
 
                 //  eğer düşman aktif değilse çizmeye devam etme
@@ -104,18 +98,17 @@ void Enemy_Update(GameData *game, float dt){
                 //  düşman ve oyuncu arasındaki x mesafesi
                 float dy = game->player.pos.y - game->enemies[i].pos.y;
 
-                //  düşman ve oyuncu arasındaki mesafeyi bulma
+                //  düşman ve oyuncu arasındaki mesafeyi bul
                 float enemyDistance = sqrt(dx * dx + dy * dy);
 
                 /*  hareket normalizasyonu eğer mesafe sıfır ise yani üst üstelerse
                 işlem yaptırmayacağız yoksa 0'a bölme hatası alırız */
                 if(enemyDistance > 0){
-                    float enemySpeed = game->enemies[i].speed; // düşman hızı
                     /*  !! düşman pozisyonuna direkt olarak dx ve dy yi eklersek düşman bize ne kadar
                     yakın olursa o kadar yavaş ne kadar uzak olursa da o kadar hızlı gelirdi*/
                     //  birim vektör elde etme
-                    game->enemies[i].pos.x += (dx / enemyDistance) * enemySpeed * dt;
-                    game->enemies[i].pos.y += (dy / enemyDistance) * enemySpeed * dt;
+                    game->enemies[i].pos.x += (dx / enemyDistance) * game->enemies[i].speed * dt;
+                    game->enemies[i].pos.y += (dy / enemyDistance) * game->enemies[i].speed * dt;
 
                     //  animasyon mantığı
                     //  düşmanla oyuncu arasındaki x değeri pozitifse yani oyuncu sağda kalıyosa sağa bak

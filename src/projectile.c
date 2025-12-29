@@ -15,7 +15,7 @@ void Projectile_FireBullet(GameData *game, Vector2 targetPos){
             game->bullets[i].pos = game->player.pos; //  oyuncunun olduğu yerden çıkıcak
             game->bullets[i].speed = 300.0f;   //  mermi hızı
             game->bullets[i].radius = 4.0f;   //  mermi büyüklüğü
-            game->bullets[i].scale = 1.0f;
+            game->bullets[i].scale = 1.0f;  //  texture ölçeklendirmesi
 
             //  animasyon başlangıç değerleri
             game->bullets[i].currentFrame = 0;
