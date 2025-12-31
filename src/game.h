@@ -25,6 +25,7 @@ void Game_ApplyUpgrade(GameData *game, int index);
 void Game_ApplyAttackSpeed(GameData *game, float percentage);
 void Game_ApplyMoveSpeed(Player *player, float percentage);
 void Game_GenerateUpgrades(GameData *game);
+void Game_DrawWorld(const GameData *game);
 
 //  yardımcı fonskiyonlar
 Vector2 Game_GetSafeSpawnPosition(Vector2 playerPos, float minDistance); //  düşmanların oyuncunun içinde doğmaması için safespawn noktası alma

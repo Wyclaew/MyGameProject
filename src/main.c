@@ -13,7 +13,7 @@
 //  programın başladığı yer
 int main(void){
     //  işletim sisteminden grafik belleği isteme
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Phase 11: Game Shell (UI and System)");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Phase 13: Infinite Map & Camera System");
     SetTargetFPS(60);   //  fps limitleme
     SetExitKey(0);
 

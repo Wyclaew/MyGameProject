@@ -13,6 +13,8 @@ void Player_Init(Player *player, GameAssets *assets){
     player->frameSpeed = 8;
     player->facingRight = true;
     player->texture = assets->playerTexture;
+    player->health = 100.0f;
+    player->maxHealth = MAX_PLAYER_HEALTH;
     
 
     //  resmin toplam genişliğini kare sayısına bölüyoruz
@@ -72,20 +74,20 @@ void Player_Update(Player *player, float dt){
             }
 
 
+            //  SONSUZ KAMERA EKLENDİĞİ İÇİN DEVRE DIŞI
+            // //  ekranın solundan dışarıya çıkamaması için
+            // if(player->pos.x < PLAYER_BOUNDARY) player->pos.x = PLAYER_BOUNDARY;
 
-            //  ekranın solundan dışarıya çıkamaması için
-            if(player->pos.x < PLAYER_BOUNDARY) player->pos.x = PLAYER_BOUNDARY;
+            // //  sağından çıkamaması için
+            // if(player->pos.x > SCREEN_WIDTH - PLAYER_BOUNDARY) player->pos.x = SCREEN_WIDTH - PLAYER_BOUNDARY;
 
-            //  sağından çıkamaması için
-            if(player->pos.x > SCREEN_WIDTH - PLAYER_BOUNDARY) player->pos.x = SCREEN_WIDTH - PLAYER_BOUNDARY;
+            // //  yukardan çıkmaması için
+            // if(player->pos.y < PLAYER_BOUNDARY) player->pos.y = PLAYER_BOUNDARY;
 
-            //  yukardan çıkmaması için
-            if(player->pos.y < PLAYER_BOUNDARY) player->pos.y = PLAYER_BOUNDARY;
-
-            //  aşağıdan çıkmaması için
-            if(player->pos.y > SCREEN_HEIGHT - PLAYER_BOUNDARY) player->pos.y = SCREEN_HEIGHT - PLAYER_BOUNDARY;
-            //  hareket mantığı ve oyun içi
-            //  IsKeyDown: tuşa basılı tutulduğu sürece true döner
+            // //  aşağıdan çıkmaması için
+            // if(player->pos.y > SCREEN_HEIGHT - PLAYER_BOUNDARY) player->pos.y = SCREEN_HEIGHT - PLAYER_BOUNDARY;
+            // //  hareket mantığı ve oyun içi
+            // //  IsKeyDown: tuşa basılı tutulduğu sürece true döner
 }
 
 
@@ -100,12 +102,12 @@ void Player_Draw(const Player *player){
             float scaledHeight = player->texture.height * player->scale;
 
             if(player->facingRight){
-                //  normal genişlik
+                //  sağa bakıyorsa genişlik pozitif kalsın
                 if(source.width < 0) source.width *= -1;
             } 
 
             else {
-                //  aynalanmış genişlik yani sola bak
+                //  sola bkıyorsa genişliği negatif yap
                 if(source.width > 0) source.width *= -1;
             }
 
@@ -123,5 +125,28 @@ void Player_Draw(const Player *player){
 
             //  oyuncuyu çizdirme
             DrawTexturePro(player->texture, source, dest, origin, 0.0f, WHITE);
+
+            //  can barı çizimi
+            float barW = 50.0f;
+            float barH = 6.0f;
+            
+            //  oyuncunun kafasının altında dursun
+            float barX = player->pos.x - (barW / 2.0f); //  ortala
+            float barY = player->pos.y - (barH / 2.0f) + 40.0f; //  15 pixel altta dursun
+
+            float ratio = (float)player->health / (float)MAX_PLAYER_HEALTH;
+            //  arka plan
+            DrawRectangle((int)barX, (int)barY, (int)barW, (int)barH, RED);
+            //  dolu kısım
+            DrawRectangle((int)barX, (int)barY, (int)(barW * ratio), (int)barH, GREEN);
+            //  çerceve
+            DrawRectangleLines((int)barX, (int)barY, (int)barW, (int)barH, BLACK);
 }
 
+void Player_Camera_Update(GameData *game){
+    //  hedef oyuncunun pozisyonu
+    game->camera.target = game->player.pos;
+
+    //  offset (ekranın ortası değişirse diye her karede güncelliyoruz)
+    game->camera.offset = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,};
+}

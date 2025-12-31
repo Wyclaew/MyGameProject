@@ -29,12 +29,19 @@ void Game_Init(GameData *game){
     game->requiredXP = 100;
     game->level = 1;
     game->currentXP = 0;
+    game->isScrollingDown = true;   //  skor tablosu aşağı doğru kayıyor
 
     //  ses ayarları
     game->settings.masterVolume = 1.0f; //  ana ses seviyesi
     game->settings.musicVolume = 1.0f;  //  müzik sesi seviyesi
     game->settings.sfxVolume = 1.0f;    //  efekt sesi sevyesi
     game->settings.isMuted = false; //  menüdeki ses kapatma butonu durumu
+
+    //  kamera ayarları
+    game->camera.target = (Vector2){0, 0};
+    game->camera.offset = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
+    game->camera.rotation = 0.0f;
+    game->camera.zoom = 1.0f;
 
 
     //  texture yükleme kontrolü
@@ -72,6 +79,8 @@ void Game_Init(GameData *game){
 
 void Game_Update(GameData *game, float dt){
 
+    UI_InitLayout(game);
+
     switch(game->currentState){
             case MENU:
             UI_UpdateMenu(game);
@@ -79,6 +88,7 @@ void Game_Update(GameData *game, float dt){
 
             case GAMEPLAY:
             Player_Update(&game->player, dt);   //  oyuncu hareketi
+            Player_Camera_Update(game); //  kamera hareketi
             Gem_UpdateGems(game,dt);    //  gem matematiği efektleri
             Game_WaveSpawner(game, dt); //  wave spawner
             Enemy_Update(game, dt); //  düşman ai update
@@ -111,7 +121,8 @@ void Game_Update(GameData *game, float dt){
 
 
 void Game_Draw(const GameData *game){
-         BeginDrawing();    //  çizmeye başla
+        //  çizmeye başla
+         BeginDrawing();
 
         //  arkaplanı her karede temizleme temizlemezsek önceki karedeki çizim kalır ve arkamızda iz bırakırız
         ClearBackground(RAYWHITE);
@@ -133,12 +144,20 @@ void Game_Draw(const GameData *game){
             
             // oyun içi çizimler oyuncu düşmanlar vs.
             case GAMEPLAY:
+            //  önce dünyayı çiz
+            Game_DrawWorld(game);
+
+            //  sonra oyunu çiz
             UI_DrawGameplay(game);
             break;
 
             //  level atlama ekranı çizimi
             case LEVEL_UP:
-            UI_DrawGameplay(game);  // arkada oyun görünsün donmuş halde
+            //  arkada donmuş olarak gözükmesi için önce dünyayı çiz
+            Game_DrawWorld(game);
+
+            //  sonra oyun çi ui
+            UI_DrawGameplay(game);
             UI_DrawLevelUp(game);
             break;
 
@@ -427,4 +446,21 @@ void Game_ApplyUpgrade(GameData *game, int index){
         // damage vs gelicek --------------------
     
     }
+}
+
+// Sadece oyun dünyasındaki varlıkları çizer (UI YOK)
+void Game_DrawWorld(const GameData *game) {
+    //  kamerayı aç
+    BeginMode2D(game->camera);
+
+        // zemin (ileride buraya resim gelecek)
+        DrawGrid(100, 50.0f); 
+
+        // Objeler
+        Gem_DrawGem(game);
+        Projectile_DrawBullet(game);
+        Enemy_Draw(game);
+        Player_Draw(&game->player);
+
+    EndMode2D(); // kamreayı kapat
 }

@@ -61,7 +61,7 @@ void Projectile_UpdateBullet(GameData *game, float dt){
             for (int i = 0; i < MAX_BULLETS; i++){
                 if(!game->bullets[i].active) continue;
                    
-                    Projectile_UpdatePysics(&game->bullets[i], dt);
+                    Projectile_UpdatePysics(&game->bullets[i], dt, game->player.pos);
 
                     Projectile_UpdateAnimation(&game->bullets[i], game->assets.bulletTexture.width);
 
@@ -143,15 +143,21 @@ void Projectile_UpdateAnimation(Projectile *bullet, int textureWidth){
 }
 
 
-void Projectile_UpdatePysics(Projectile *bullet, float dt){
+void Projectile_UpdatePysics(Projectile *bullet, float dt, Vector2 playerPos){
 
     //  mermiyi ilerlet
     bullet->pos.x += bullet->dir.x * bullet->speed * dt;
     bullet->pos.y += bullet->dir.y * bullet->speed * dt;
 
-    //  mermi ekran dışına çıktı mı kontrol et
-    if(bullet->pos.x < 0 || bullet->pos.x > SCREEN_WIDTH || bullet->pos.y < 0 || bullet->pos.y > SCREEN_HEIGHT){
-        bullet->active = false; //  mermiyi yok et
-    }
+    // //  mermi ekran dışına çıktı mı kontrol et
+    // if(bullet->pos.x < 0 || bullet->pos.x > SCREEN_WIDTH || bullet->pos.y < 0 || bullet->pos.y > SCREEN_HEIGHT){
+    //     bullet->active = false; //  mermiyi yok et
+    // }
+
+    //  yeni kontrol ekran sınırı değil belirli mesafeye göre mermileri sildirme
+    float dist = sqrt(pow(bullet->pos.x - playerPos.x, 2) + pow(bullet->pos.y - playerPos.y, 2));
+
+    //  çook uzaklaştığı için mermiyi sil
+    if(dist > 3000.0f) bullet->active = false;
 }
 

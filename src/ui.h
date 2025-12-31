@@ -26,6 +26,7 @@ void UI_DrawCenteredText(const char* text, Rectangle rect, int fontSize, Color c
 void UI_DrawXPBar(const GameData *game);
 void UI_UpdateLevelUp(GameData *game);
 void UI_DrawLevelUp(const GameData *game);
+void DrawResponsiveButton(Rectangle rect, const char* text, int fontSize, Color baseColor);
 
 
 

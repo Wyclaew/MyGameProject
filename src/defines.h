@@ -8,10 +8,10 @@
 //  sabitler
 #define MAX_BULLETS 2000    //  mermi havuzu
 #define MAX_ENEMIES 2000    //  düşman havuzu
-#define MAX_HIGHSCORE 10    //  tabloda ilk kaç skor gözükücek
+#define MAX_HIGHSCORE 20    //  tabloda ilk kaç skor gözükücek
 #define MAX_GEM 1000    //  ekrandaki maksimum gem
-#define SCREEN_WIDTH 800   //  ekran genişlik
-#define SCREEN_HEIGHT 600   //  ekran yükseklik
+#define SCREEN_WIDTH 1920   //  ekran genişlik
+#define SCREEN_HEIGHT 1080   //  ekran yükseklik
 
 
 //  oyun sabitleri
@@ -24,6 +24,7 @@
 #define XP_INTERVAL 1.5f    //  level atlamak gittikçe ne kadar zorlaşsın değeri
 #define MAX_PLAYER_SPEED 600.0f //  maksimum oyuncu hızı
 #define MAX_SHOOT_COOLDOWN 0.1f //  maksimum mermi cooldownı
+#define MAX_PLAYER_HEALTH 100.0f    //  maximum can değeri
 
 
 
@@ -84,6 +85,8 @@ typedef struct {
     float framesCounter;    //  zaman sayacı animasyon hızı için
     bool facingRight;    //  karakter sağa mı bakıyor
     float scale;    //  karakter ölçeklendirmesi için
+    float health;   //  mevcut can
+    float maxHealth;    //  maximum can
 } Player;
 
 
@@ -183,7 +186,10 @@ typedef struct {
     float shootTimer;    //  saldırı zamanlayıcısı 0
     float spawnInterval;    //  ne sıklıkla düşman çıkıcak 1.5f
     float shootCooldown; //  yarım saniyede bir ateş et  0.5f
+    float scoreScrollOffset;    //  skor tablosunun kayma miktarı
     bool isNewHighScore;    //  gameover ekranında eğer ilk 10 a giren skor varsa input kutusu açmak için
+    bool isScrollingDown;   //  yüksek skor tablosu aşağı mı iniyor geri yukarı mı sarıyor
+    Camera2D camera;    //  oyuncu kamerası
 } GameData;
 
 
