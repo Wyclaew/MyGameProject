@@ -19,11 +19,13 @@ void Game_Init(GameData *game){
 
     //  oyun başlangıç değerleri
     game->currentState = MENU;  //  başlangıçta hangi menüde olucak
-    game->spawnInterval = INITIAL_SPAWN_INTERVAL - 3.0f; //  oyun zorluk değeri
+    game->spawnInterval = INITIAL_SPAWN_INTERVAL - 20.0f; //  oyun zorluk değeri
     game->shootCooldown = 0.8f; //  atış hızımız
-    game->enemyWaveSize = 5;    //  başlangıçta 5 düşman 
+    game->enemyWaveSize = 2;    //  başlangıçta 5 düşman 
     game->assets.playerTexture = LoadTexture("player_cat_walk.png");
-    game->assets.enemyTexture = LoadTexture("enemy_walk.png");
+    game->assets.enemyTextures[ENEMY_BASIC] = LoadTexture("enemy_basic.png");
+    game->assets.enemyTextures[ENEMY_RUSHER] = LoadTexture("enemy_rusher.png");
+    game->assets.enemyTextures[ENEMY_TANK] = LoadTexture("enemy_tank.png");
     game->assets.bulletTexture = LoadTexture("bullet_fired.png");
     game->assets.gemTexture = LoadTexture("xp_gem.png");
     game->requiredXP = 100;
@@ -53,8 +55,8 @@ void Game_Init(GameData *game){
         TraceLog(LOG_WARNING, "Bullet texture failed to load!");
     }
 
-        if(game->assets.enemyTexture.id == 0){
-        TraceLog(LOG_WARNING, "Enemy texture failed to load!");
+    if(game->assets.enemyTextures[ENEMY_BASIC].id == 0){
+    TraceLog(LOG_WARNING, "enemy_basic texture failed to load!");
     }
 
     //  alt sistemleri başlat
@@ -95,6 +97,7 @@ void Game_Update(GameData *game, float dt){
             Projectile_UpdateBullet(game, dt);   //  mermi hareketi
             Game_ShootingSystem(game, dt);  //  otomatik ateş sistemi
             Collisions_CheckAll(game);  //  carpışma kontrolü
+            Game_CheckLevelUp(game);    //  level atlama kontrolü
             break;
 
             case LEVEL_UP:
@@ -239,7 +242,7 @@ void Game_WaveSpawner(GameData *game, float dt){
             }
             
             //  gittikçe dalga boyutunu artır
-            game->enemyWaveSize += 2;
+            game->enemyWaveSize += 1;
 
             //  wavesize limitle sonsuza kadar artmasın
             if(game->enemyWaveSize > 50) game->enemyWaveSize = 50;
@@ -300,7 +303,7 @@ void Game_UpdateGameOver(GameData *game){
             //  yeni listeyi kalıcı olarak kaydediyoruz
             Game_SaveHighScores(game);
             game->isNewHighScore = false;
-            game->currentState = HIGHSCORES;  //  kaydettikten sonra skorları gösteriyo
+            game->currentState = MENU;
         }
     }
     else {
@@ -397,7 +400,11 @@ void Game_CheckAndSaveScore(GameData *game, int newScore){
 
 void Game_Cleanup(GameData *game){
     UnloadTexture(game->assets.playerTexture);
-    UnloadTexture(game->assets.enemyTexture);
+
+    for(int i=0; i < ENEMY_TYPE_COUNT; i++){
+    UnloadTexture(game->assets.enemyTextures[i]);
+    }
+    
     UnloadTexture(game->assets.bulletTexture);
     UnloadTexture(game->assets.gemTexture);
 }
@@ -415,7 +422,7 @@ void Game_GenerateUpgrades(GameData *game){
 
 //  hız ekleme yardımcı fonksiyonu
 void Game_ApplyMoveSpeed(Player *player, float percentage){
-    player->speed = (1.0f * percentage);
+    player->speed += (1.0f * percentage);
 
     //  yürüme hızını limitle
     if(player->speed > MAX_PLAYER_SPEED) player->speed = MAX_PLAYER_SPEED;
@@ -423,7 +430,7 @@ void Game_ApplyMoveSpeed(Player *player, float percentage){
 
 //  atış hızı azaltma yardımcı fonksiyonu
 void Game_ApplyAttackSpeed(GameData *game, float percentage){
-    game->shootCooldown = (1.0f - percentage);
+    game->shootCooldown *= (1.0f - percentage);
 
     //  atış hızını limitle
     if(game->shootCooldown < MAX_SHOOT_COOLDOWN) game->shootCooldown = MAX_SHOOT_COOLDOWN;
@@ -463,4 +470,19 @@ void Game_DrawWorld(const GameData *game) {
         Player_Draw(&game->player);
 
     EndMode2D(); // kamreayı kapat
+}
+
+void Game_CheckLevelUp(GameData *game) {
+                //  level atlama kontrolü
+            if(game->currentXP >= game->requiredXP){
+                game->level++;
+                game->currentXP -= game->requiredXP; //  artan leveli sonraki levele aktarma
+                game->requiredXP = (int)game->requiredXP * XP_INTERVAL; //  level atlamayı zorlaştır
+
+                //  upgrade kartlarını hazırla
+                Game_GenerateUpgrades(game);    //  kartları hazırla
+                game->currentState = LEVEL_UP;  //  oyunu dondur ve menüyü aç
+                // buraya level atlama ödülü olarak can yinelem veya başka bişey gelebilir
+                //  level atlama sesi de gelebilir
+            }
 }

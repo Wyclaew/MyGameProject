@@ -14,7 +14,7 @@ void Gem_Init(GameData *game){
         game->gems[i].active = false;
         game->gems[i].rotation = 0.0f;
         game->gems[i].isMagnetized = false;
-        game->gems[i].texture = LoadTexture("xp_gem.png");
+        game->gems[i].texture = game->assets.gemTexture;
     }
 }
 
@@ -36,7 +36,7 @@ void Gem_UpdateGems(GameData *game, float dt){
         float dist = sqrt(dx * dx + dy * dy);
 
         //  oyuncuya doğru çekilme manyetiklik efekti
-        if(dist < 100) {
+        if(dist < 150) {
             game->gems[i].pos.x += (dx / dist) * 5.0f;
             game->gems[i].pos.y += (dy / dist) * 5.0f;
             game->gems[i].isMagnetized = true;
@@ -50,19 +50,6 @@ void Gem_UpdateGems(GameData *game, float dt){
         if(dist < game->player.radius) {
             game->gems[i].active = false;   //  xp yi yoket
             game->currentXP += game->gems[i].value; //  mevcut xp ye alınan xp değeri kadar ekle
-
-            //  level atlama kontrolü
-            if(game->currentXP >= game->requiredXP){
-                game->level++;
-                game->currentXP -= game->requiredXP; //  artan leveli sonraki levele aktarma
-                game->requiredXP = (int)game->requiredXP * XP_INTERVAL; //  level atlamayı zorlaştır
-
-                //  upgrade kartlarını hazırla
-                Game_GenerateUpgrades(game);    //  kartları hazırla
-                game->currentState = LEVEL_UP;  //  oyunu dondur ve menüyü aç
-                // buraya level atlama ödülü olarak can yinelem veya başka bişey gelebilir
-                //  level atlama sesi de gelebilir
-            }
 
         }
 
@@ -79,6 +66,7 @@ void Gem_SpawnGem(GameData *game, Vector2 position, int value){
             game->gems[i].value = value;
             game->gems[i].rotation = 0.0f;
             game->gems[i].isMagnetized = false;
+            game->gems[i].texture = game->assets.gemTexture;
             break;
         }
     }
@@ -86,61 +74,59 @@ void Gem_SpawnGem(GameData *game, Vector2 position, int value){
 }
 
 
+
 void Gem_DrawGem(const GameData *game){
     Texture2D texture = game->assets.gemTexture;
     
     //  texture merkezini bul
     Vector2 origin = {(float)texture.width / 2, (float)texture.height / 2};
-    float scale = 1.0f;
-
-    //  parlama efekti 
-    //  üst üste binen renkleri toplayarak ışık gibi görünmesini sağlıyor
-    BeginBlendMode(BLEND_ADDITIVE);
+    float scale = 0.3f;
 
     for (int i = 0; i < MAX_GEM; i++){
+        //  aktif olmayanları geç
         if(!game->gems[i].active) continue;
 
         const Gem *g = &game->gems[i];
 
-        //  iz efekti
         if(g->isMagnetized){
-            //  oyuncuya giden yönün tersini bul
+            
+            //  parlama efekti içinn
+            BeginBlendMode(BLEND_ADDITIVE);
+
+            //  oyuncuya giden yönün tersini bul efekt için
             Vector2 dirToPlayer = Vector2Subtract(game->player.pos, g->pos);
             dirToPlayer = Vector2Normalize(dirToPlayer);
-            Vector2 trailDir = Vector2Scale(dirToPlayer, -1.0f);    //  ters yön
+            Vector2 trailDir = Vector2Scale(dirToPlayer, -1.0f);    // Ters yön
 
-            //  arkasına 3 tane azalarak sönen kopya çiz
+            //  arkasına 3 tane azalarak giden kopya çiz
             for (int k = 1; k <= 3; k++){
-            Vector2 trailPos = Vector2Add(g->pos, Vector2Scale(trailDir, k * 0.8f));    //  8 piksel arayla
+                Vector2 trailPos = Vector2Add(g->pos, Vector2Scale(trailDir, k * 0.8f));
 
-            //  gittikçe şeffaflaşan ve küçülen kopyalar
-            float trailAlpha = 0.6f - (k * 0.15f);
-            float trailScale = scale * (1.0f - k * 0.2f);
+                float trailAlpha = 0.6f - (k * 0.15f);
+                float trailScale = scale * (1.0f - k * 0.2f);
 
-            //  izi çiz
-            DrawTexturePro(texture, 
-            (Rectangle){0, 0, texture.width, texture.height},
-            (Rectangle){trailPos.x, trailPos.y, texture.width * trailScale, texture.height * trailScale},
-            origin,
-            g->rotation - (k * 10), //  izin dönüşü hafif arkadan geliyor
-            Fade(GOLD, trailAlpha));
-
+                DrawTexturePro(texture, 
+                    (Rectangle){0, 0, texture.width, texture.height},
+                    (Rectangle){trailPos.x, trailPos.y, texture.width * trailScale, texture.height * trailScale},
+                    origin,
+                    g->rotation - (k * 10),
+                    Fade(GOLD, trailAlpha));
             }
+            
+            //  moddan çık
+            EndBlendMode();
+        }
 
-            //  ana gem çizimi
-            //  ekranda nereye ne boyutta çizilecek
-            Rectangle dest = { g->pos.x, g->pos.y, texture.width * scale, texture.height * scale};
 
-            //  kendisini çiz
-            DrawTexturePro(texture,
-            (Rectangle){0, 0, texture.width, texture.height},   //  kaynak tüm resim
+        //  ana gem çizimi
+        Rectangle dest = { g->pos.x, g->pos.y, texture.width * scale, texture.height * scale};
+
+        //  gem texture çizimi
+        DrawTexturePro(texture,
+            (Rectangle){0, 0, texture.width, texture.height},   
             dest,
             origin,
             g->rotation,
-            WHITE); //  orijinal renk
-            
-        }
+            WHITE); 
     }
-    //  planlama modunu kapat
-    EndBlendMode();
 }

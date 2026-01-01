@@ -13,7 +13,7 @@ void Projectile_FireBullet(GameData *game, Vector2 targetPos){
 
             game->bullets[i].active = true;   //  artık kullanılıyor
             game->bullets[i].pos = game->player.pos; //  oyuncunun olduğu yerden çıkıcak
-            game->bullets[i].speed = 300.0f;   //  mermi hızı
+            game->bullets[i].speed = 450.0f;   //  mermi hızı
             game->bullets[i].radius = 4.0f;   //  mermi büyüklüğü
             game->bullets[i].scale = 1.0f;  //  texture ölçeklendirmesi
 
@@ -158,6 +158,6 @@ void Projectile_UpdatePysics(Projectile *bullet, float dt, Vector2 playerPos){
     float dist = sqrt(pow(bullet->pos.x - playerPos.x, 2) + pow(bullet->pos.y - playerPos.y, 2));
 
     //  çook uzaklaştığı için mermiyi sil
-    if(dist > 3000.0f) bullet->active = false;
+    if(dist > 1500.0f) bullet->active = false;
 }
 

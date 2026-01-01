@@ -1,7 +1,7 @@
 #include "collision.h"
 #include "game.h"
 #include "gem.h"
-
+#include "enemy.h"
 
 
  //  mermi ve düşman çarpışma güncelleyicisi
@@ -26,13 +26,27 @@ void Collisions_BulletEnemy(GameData *game){
                     //  vurulma anı mermiyi yoket
                     game->bullets[i].active = false;
 
-                    //  düşman yok oldu
-                    game->enemies[j].active = false;
+                    //  ilerdide bullet damage eklenebilir şimdilik sabit 10
+                    game->enemies[j].health -= 10.0f;
 
-                    //  xp düşür
-                    Gem_SpawnGem(game, game->enemies[j].pos, 10);   //  10 xplik gem düşür
-                    game->score += 1; // skora 1 puan ekle 
-                    //  mermi bir düşmanı buldu ve yok oldu diğerlerine bakmaya gerek yok döngüden çıkıyoruz
+                    //  ölüm kontrolü
+                    if(game->enemies[j].health <= 0){
+                        //  düşmanı yoket
+                        game->enemies[j].active = false;
+
+                        //  düşmanın türüne göre tablodan xp değerini çek
+                        EnemyType type = game->enemies[j].type;
+                        
+                        //  düşmanı spawn ederken direkt olarak xp değeri verdiğimiz için burda bişey yapmicaz daha
+                        int xpReward = game->enemies[j].xpReward;
+
+                        //  gem düşürme fonksiyonunu çağırıyoruz
+                        Gem_SpawnGem(game, game->enemies[j].pos, xpReward);
+
+                        //  tank öldürünce 2 puan gelsin
+                        //  sonradan her düşman için özel puan ekleyebiliriz
+                        game->score += (type == ENEMY_TANK) ? 2 : 1;
+                    }
                     break;
                 }
          }   
@@ -49,12 +63,15 @@ void Collisions_PlayerEnemy(GameData *game){
                 //  oyuncu ile düşman biribirine değdi mi
                 if (CheckCollisionCircles(game->player.pos, game->player.radius, game->enemies[i].pos, ENEMY_RADIUS)){
 
+                game->player.health -= 10;
+                
+                if (game->player.health <= 0) {
                 //  skoru kontrol et rekor mu diye
                 Game_CheckAndSaveScore(game, game->score);
 
                 //  çarpışma yaşandığı için oyunu bitirme
                 game->currentState = GAME_OVER;
-                
+                }
                 //  oyun bittiği için döngüden çıkabiliriz
                 break;
             }

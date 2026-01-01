@@ -20,11 +20,16 @@
 #define ENEMY_FRAME_COUNT 6 //  düşman frame sayısı
 #define PROJECTILE_FRAME_COUNT 6    //   mermi frame sayısı
 #define PLAYER_BOUNDARY 20  //  oyuncu sınırı
-#define INITIAL_SPAWN_INTERVAL 15.0f //  oyun zorluğu
+#define INITIAL_SPAWN_INTERVAL 30.0f //  oyun zorluğu
 #define XP_INTERVAL 1.5f    //  level atlamak gittikçe ne kadar zorlaşsın değeri
 #define MAX_PLAYER_SPEED 600.0f //  maksimum oyuncu hızı
 #define MAX_SHOOT_COOLDOWN 0.1f //  maksimum mermi cooldownı
 #define MAX_PLAYER_HEALTH 100.0f    //  maximum can değeri
+
+//  spatial system sabitleri
+#define CELL_SIZE 100 //    her hücre 100x100 pixel
+#define GRID_BUCKETS 1024   //  toplam hücre sayısı
+#define MAX_PER_CELL 128    //  bir hücrede olabilecek maximum düşman
 
 
 
@@ -48,6 +53,26 @@ typedef enum {
     UPGRADE_DAMAGE, //  saldırı gücü upgradei
     UPGRADE_HEALTH //  can yükseltme veya can alma upgradei
 } UpgradeType;
+
+//  düşman türleri
+typedef enum {
+    ENEMY_BASIC,    //  dengeli düşman
+    ENEMY_RUSHER,   //  hızlı ama zayıf
+    ENEMY_TANK, //  güçlü ama yavaş
+    ENEMY_TYPE_COUNT    // kaç tane düşman türü var
+}EnemyType;
+
+
+//  düşman fabrika ayaralrı
+//  oyun sırasında değişmeyen değerler
+typedef struct{
+    float baseHealth;   //  başlangıç canı
+    float baseSpeed;    //  başlangıç hızı
+    float scale;   //  boyut çarpanı
+    float radius;   //  çarpışma yarıçapı
+    Color tint; //  ayırt edici renk
+    int xpValue;    //  öldüğünde vereği xp
+}EnemyDef;
 
 
 //  yükseltme kartı yapısı
@@ -91,18 +116,21 @@ typedef struct {
 
 
 //  düşman yapısı
+//  oyun sırasında değişir
 typedef struct {
     Vector2 pos;    //  düşman pozisyonu
     Color color;    //  düşman rengi
+    int xpReward;   //  vereceği xp 
+    int currentFrame;   //  düşmanın o anki gösterilen frame numarası
+    int type;
     float speed;    //  düşman hızı
     float health;   //  düşman canı
+    float maxHealth;    //  can barı çizimi için
     float frameSpeed;   //  düşmanın frame i ne kadar hızlı değişecek
     float frameCounter; //  frame sayacı
     float scale;    //  texture ölçeklendirme değeri
     bool facingRight;   //  düşmanın bize doğru bakmasının kontrolü
     bool active;    //  düşman aktifliği
-    int type;   //  düşman tipi ilerisi için
-    int currentFrame;   //  düşmanın o anki gösterilen frame numarası
     Texture2D texture;  //  düşman texture ü
     Rectangle frameRec; //  düşman için yüklediğimiz resmin tek karesi 
 } Enemy;
@@ -157,7 +185,7 @@ typedef struct{
 
 typedef struct{
     Texture2D playerTexture;    //  oyuncu texture ü
-    Texture2D enemyTexture; //  düşman texture ü
+    Texture2D enemyTextures[ENEMY_TYPE_COUNT];  //  
     Texture2D bulletTexture;    //  mermi texture ü
     Texture2D gemTexture;   //  gem texture ü
 } GameAssets;

@@ -13,8 +13,10 @@
 //  programın başladığı yer
 int main(void){
     //  işletim sisteminden grafik belleği isteme
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Phase 13: Infinite Map & Camera System");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Phase 14: Dynamic Spawning & Enemy Types");
     SetTargetFPS(60);   //  fps limitleme
+
+    //  esc tuşunun pencereyi kapatma özelliğini devre dışı bıraktık
     SetExitKey(0);
 
     //  random seed

@@ -5,11 +5,11 @@
 
 //  level atlayınca önümüze rastgele gelen güçlendirmeler
 const UpgradeDef upgradePool[] = {
-    {"Quick Shot", "Attack speed increases by %5", UPGRADE_ATTACK_SPEED, 0.05f},
-    {"Sun Of The Wind", "Movement speed increases by %5", UPGRADE_MOVEMENT_SPEED, 0.05f},
-    {"Machine Gun", "Attack speed increases by %10", UPGRADE_ATTACK_SPEED, 0.1f},
-    {"Athletic", "Movement speed increases by %10", UPGRADE_MOVEMENT_SPEED, 0.1f},
-    {"Heavy Hitter", "Damage increases by %10", UPGRADE_DAMAGE, 0.1f}
+    {"Quick Shot", "Attack speed increases\nby %5", UPGRADE_ATTACK_SPEED, 0.05f},
+    {"Sun Of The Wind", "Movement speed increases\nby %5", UPGRADE_MOVEMENT_SPEED, 0.05f},
+    {"Machine Gun", "Attack speed increases\nby %10", UPGRADE_ATTACK_SPEED, 0.1f},
+    "Athletic", "Movement speed increases\nby %10", UPGRADE_MOVEMENT_SPEED, 0.1f,
+    {"Heavy Hitter", "Damage increases\nby %10", UPGRADE_DAMAGE, 0.1f}
     //  daha fazla çeşitli şeyler eklenebilir
 };
 

@@ -312,19 +312,44 @@ void UI_DrawSettings(const GameData *game){
 
 void UI_UpdateSettings(GameData *game){
     //  kaydırıcı bar yapımı
-    Vector2 mouse = GetMousePosition();
-    Rectangle sliderMaster = {300, 200, 200, 20,};
+Vector2 mouse = GetMousePosition();
+    
+    //  panel ve slider konumları draw fonksiyonu ile aynı olmalı
+    int sw = GetScreenWidth();
+    int sh = GetScreenHeight();
+    float panelW = sw * 0.6f;
+    float panelH = sh * 0.6f;
+    Rectangle panel = {(sw - panelW) / 2, (sh - panelH) / 2, panelW, panelH};
+    
+    float sliderW = panelW * 0.8f;
+    float sliderH = panelH * 0.08f;
+
+    //  slider konumu draw ile aynı olucak
+    Rectangle sliderRect = {
+        panel.x + (panelW - sliderW) / 2,
+        panel.y + 160, 
+        sliderW,
+        sliderH
+    };
     
     //  ayarlardan menüye gelme
     if(IsKeyPressed(KEY_B)) game->currentState = MENU;
 
     //  slider mantığı
     if(IsMouseButtonDown(MOUSE_LEFT_BUTTON)){
-        if(CheckCollisionPointRec(mouse, sliderMaster)){
-            //  farenin konumuna göre 0.0 ile 1.0 arasında bir değer hesaplar
-            float value = (mouse.x - sliderMaster.x) / sliderMaster.width;
+if(mouse.x >= sliderRect.x && mouse.x <= sliderRect.x + sliderRect.width &&
+           mouse.y >= sliderRect.y - 10 && mouse.y <= sliderRect.y + sliderRect.height + 10){
+            
+            float value = (mouse.x - sliderRect.x) / sliderRect.width;
+            
+            //  değeri 0 ile 1 arasına sıkıştır
+            if (value < 0.0f) value = 0.0f;
+            if (value > 1.0f) value = 1.0f;
+
             game->settings.masterVolume = value;
-            SetMasterVolume(game->settings.masterVolume); //  raylibin ses ayarı
+            
+            //  ses ayarını uygula
+            SetMasterVolume(game->settings.masterVolume);
         }
     }
 }
@@ -337,7 +362,7 @@ void UI_DrawGameplay(const GameData *game){
     UI_DrawDebugInfo(game);
 
     //  skor tablosu
-    DrawText(TextFormat("SCORE : %i", game->score), 20, 40, 20, GOLD); 
+    DrawText(TextFormat("SCORE : %i", game->score), 1000, 40, 20, GOLD); 
 
     //  xp barı
     UI_DrawXPBar(game);
@@ -408,7 +433,7 @@ void UI_DrawGameOver(const GameData *game){
 
 
 void UI_DrawDebugInfo(const GameData *game){
-                DrawText("Hareket için W, A, S, D", 10, 60, 20, LIGHTGRAY);
+            DrawText("Hareket için W, A, S, D", 10, 100, 20, LIGHTGRAY);
 
             //  debug ekranı ekleme
 
@@ -428,8 +453,8 @@ void UI_DrawDebugInfo(const GameData *game){
             char debugText[100];
             
             // sprintf(debugText, "Fps : %d  |  Mermiler : %d  |  Dusmanlar : %d", fps, activeBullets, activeEnemies);
-            sprintf(debugText, "pos : %.0f, %.0f | FPS : %d | Bullet : %d | Enemy : %d", game->player.pos.x, game->player.pos.y, fps, activeBullets, activeEnemies);
-            DrawText(debugText, 10, 60, 20, GREEN);
+            sprintf(debugText, "pos : %.0f, %.0f | FPS : %d | Bullet : %d | Enemy : %d | speed : %.0f | health : %.0f", game->player.pos.x, game->player.pos.y, fps, activeBullets, activeEnemies, game->player.speed, game->player.health);
+            DrawText(debugText, 10, 90, 20, GREEN);
 }
 
 
@@ -480,6 +505,10 @@ void UI_DrawXPBar(const GameData *game){
     //  dolu bar 
     float ratio = (float)game->currentXP / (float)game->requiredXP;
 
+    if(game->currentState == LEVEL_UP) {
+        ratio = 1.0f;
+    }
+
     //  barın taşmasını önle
     if(ratio > 1.0f) ratio = 1.0f;
 
@@ -490,7 +519,7 @@ void UI_DrawXPBar(const GameData *game){
         //  zamanı kullanrak sürekli değişen bir hue değeri üret
         //  rainbow efekt hızı gettime * 800 hızı belirler
         //  360 değeri ile mod alarak renk çemberinde dönmeyi sağla
-        float hue = (float)((int)(GetTime() * 800) % 360);
+        float hue = (float)((int)(GetTime() * 400) % 360);
         barColor = ColorFromHSV(hue, 0.8f, 1.0f);   //  parlak canlı renkler
     }
     //  barın dolu kısmı
@@ -501,7 +530,7 @@ void UI_DrawXPBar(const GameData *game){
 
     //  level yazısı
     const char* levelText = TextFormat("LEVEL : %d", game->level);
-    int fontSize = (int)(sh * 0.04f);
+    int fontSize = (int)(sh * 0.02f);
     
     //  yazının ekrandaki genişkiği
     int textWidth = MeasureText(levelText, fontSize);
@@ -520,7 +549,7 @@ void UI_UpdateLevelUp(GameData *game){
 
     //  kartların dinamik boyut hesabı
     float cardW = sw * 0.22f;   //  kartların genişliği
-    float cardH = sh * 0.22f;   //  kartların yüksekliği
+    float cardH = sh * 0.50f;   //  kartların yüksekliği
     float gap = sw * 0.03f; //  kartlar arası boşluk
     
     //  başlngıç x noktası
@@ -544,6 +573,12 @@ void UI_UpdateLevelUp(GameData *game){
             if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
             //  upgrade kartı seçme efekti eklenebilir
             Game_ApplyUpgrade(game, i);
+
+            //  upgrade i uyguladıktan sonra düşmanları güvenli bir yere koy
+            Enemy_PushAwayFromPlayer(game, 150.0f);
+
+            //  oyunu tekrar başlatıyoruz
+            game->currentState = GAMEPLAY;
             }
         }
     }
@@ -556,10 +591,10 @@ void UI_DrawLevelUp(const GameData *game){
     float sh = GetScreenHeight();
 
     //  arka planı karart
-    DrawRectangle(0, 0, (int)sw, (int)sh, Fade(BLACK, 0.85f));
+    DrawRectangle(0, 0, (int)sw, (int)sh, Fade(WHITE, 0.0f));
 
     //  dinamik yazılar
-    int titleSize = (int)(sh * 0.8f);    //  ekran yüksekliğinin %8 i kadar
+    int titleSize = (int)(sh * 0.08f);    //  ekran yüksekliğinin %8 i kadar
     int subTitleSize = (int)(sh * 0.03f);   //  ekran yüksekliğinin %3 ü kadar
 
     //  başlıkları çiz

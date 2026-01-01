@@ -11,6 +11,7 @@ void Enemy_Draw(const GameData *game);   //  düşman çizdirme
 void Enemy_DrawAll(const GameData *game);
 void Enemy_Spawn(GameData *game);   //  düşman spawnlama
 void Enemy_Reset(GameData *game);    //  düşmanları resetleme
+void Enemy_PushAwayFromPlayer(GameData *game, float safeRadius);    //  upgrad aldıktan sonra direkt ölmeyi engellemek içim
 
 
 
