@@ -12,12 +12,4 @@ extern int grid[GRID_BUCKETS][MAX_PER_CELL];
 extern int gridCounts[GRID_BUCKETS];
 
 
-
-
-
-
-
-
-
-
 #endif
