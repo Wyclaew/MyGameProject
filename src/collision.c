@@ -6,8 +6,6 @@
 
  //  mermi ve düşman çarpışma güncelleyicisi
 void Collisions_BulletEnemy(GameData *game){
-            
-
         //  mermileri tek tek gez
         for (int i = 0; i < MAX_BULLETS; i++){
             //  eğer mermi aktif ekranda değilse o mermiyi direkt geçiyor (optimizasyon)
@@ -65,11 +63,12 @@ void Collisions_PlayerEnemy(GameData *game){
 
                 game->player.health -= 10;
                 
+                //  oyuncunun canı bitti mi
                 if (game->player.health <= 0) {
                 //  skoru kontrol et rekor mu diye
                 Game_CheckAndSaveScore(game, game->score);
 
-                //  çarpışma yaşandığı için oyunu bitirme
+                //  mevcut oyun modu game over
                 game->currentState = GAME_OVER;
                 }
                 //  oyun bittiği için döngüden çıkabiliriz

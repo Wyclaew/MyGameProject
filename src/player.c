@@ -4,30 +4,29 @@
 
 
 void Player_Init(Player *player, GameAssets *assets){
-    player->pos = (Vector2){400, 300};
-    player->speed = 200.0f;
-    player->radius = 20.0f;
-    player->scale= 1.5f;
-    player->currentFrame = 0;
-    player->framesCounter = 0;
-    player->frameSpeed = 8;
-    player->facingRight = true;
-    player->texture = assets->playerTexture;
-    player->health = 100.0f;
-    player->maxHealth = MAX_PLAYER_HEALTH;
+    player->pos = (Vector2){0, 0};  //  oyuncunun başlangıç pozisyonu
+    player->speed = 200.0f; //  oyuncunun başlangıç hızı
+    player->radius = 20.0f; //  oyuncunun başlangıç büyüklüğü
+    player->scale= 1.5f;    //  texture vs ölceklendirmesi için 
+    player->currentFrame = 0;   //  animasyon başlangıç framei
+    player->framesCounter = 0;  //  frame sayacı
+    player->frameSpeed = 8; //  frame hızı saniyede kaç frame geçicek
+    player->facingRight = true; //  oyununcunun baktığı yön kontrolü texture için
+    player->texture = assets->playerTexture;    //  texture ataması
+    player->health = 100.0f;    //  oyuncunun başlangıç canı
+    player->maxHealth = MAX_PLAYER_HEALTH;  //  maximum ulaşabileceği can 
     
 
     //  resmin toplam genişliğini kare sayısına bölüyoruz
-    float frameWidth = (float) player->texture.width / 8;
+    float frameWidth = (float) player->texture.width / PLAYER_FRAME_COUNT;
+
+    //  texture ün tek bir karesini kaydediyoruz
     player->frameRec = (Rectangle){0.0f, 0.0f, frameWidth, (float)player->texture.height};
 
 
 }
 
 void Player_Update(Player *player, float dt){
-
-
-
             //  hareket ediyor mu kontrolü
             bool isMoving = false;
 
@@ -45,12 +44,11 @@ void Player_Update(Player *player, float dt){
 
 
             //  animasyon mantığı
-
             if(isMoving){
                 player->framesCounter++; //  frame sayacını artırmaya başlayacağız
 
                 //  sayaç kare sınırına geldi mi (yani mesela 8 karede bir değiştiriceksek 8 e geldi mi)
-                if(player->framesCounter >= (60/player->frameSpeed)){
+                if(player->framesCounter >= (60 / player->frameSpeed)){
 
                     //  sayacı sıfırla
                     player->framesCounter = 0;
@@ -59,10 +57,10 @@ void Player_Update(Player *player, float dt){
                     player->currentFrame++;
                     
                     //  8 frame olduğu çin 8 e geldi mi yani film şeridi bitti mi
-                    if(player->currentFrame > 7) player->currentFrame = 0;
+                    if(player->currentFrame > PLAYER_FRAME_COUNT - 1) player->currentFrame = 0;
 
                     //  pencereyi sağa kaydır
-                    player->frameRec.x = (float)player->currentFrame * player->texture.width / 8;
+                    player->frameRec.x = (float)player->currentFrame * player->texture.width / PLAYER_FRAME_COUNT;
                 }
             }
 

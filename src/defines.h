@@ -10,8 +10,8 @@
 #define MAX_ENEMIES 2000    //  düşman havuzu
 #define MAX_HIGHSCORE 20    //  tabloda ilk kaç skor gözükücek
 #define MAX_GEM 1000    //  ekrandaki maksimum gem
-#define SCREEN_WIDTH 1920   //  ekran genişlik
-#define SCREEN_HEIGHT 1080   //  ekran yükseklik
+#define SCREEN_WIDTH GetScreenWidth()   //  ekran genişlik
+#define SCREEN_HEIGHT GetScreenHeight()   //  ekran yükseklik
 
 
 //  oyun sabitleri
@@ -21,10 +21,11 @@
 #define PROJECTILE_FRAME_COUNT 6    //   mermi frame sayısı
 #define PLAYER_BOUNDARY 20  //  oyuncu sınırı
 #define INITIAL_SPAWN_INTERVAL 30.0f //  oyun zorluğu
-#define XP_INTERVAL 1.5f    //  level atlamak gittikçe ne kadar zorlaşsın değeri
-#define MAX_PLAYER_SPEED 600.0f //  maksimum oyuncu hızı
+#define XP_INTERVAL 1.1f    //  level atlamak gittikçe ne kadar zorlaşsın değeri
+#define MAX_PLAYER_SPEED 350.0f //  maksimum oyuncu hızı
 #define MAX_SHOOT_COOLDOWN 0.1f //  maksimum mermi cooldownı
 #define MAX_PLAYER_HEALTH 100.0f    //  maximum can değeri
+#define SCROLL_SPEED 35.0f  //  mouse tekerleği kaydırma hızı
 
 //  spatial system sabitleri
 #define CELL_SIZE 100 //    her hücre 100x100 pixel
@@ -56,10 +57,10 @@ typedef enum {
 
 //  düşman türleri
 typedef enum {
-    ENEMY_BASIC,    //  dengeli düşman
-    ENEMY_RUSHER,   //  hızlı ama zayıf
-    ENEMY_TANK, //  güçlü ama yavaş
-    ENEMY_TYPE_COUNT    // kaç tane düşman türü var
+    ENEMY_BASIC,    //  dengeli düşman 0
+    ENEMY_RUSHER,   //  hızlı ama zayıf 1
+    ENEMY_TANK, //  güçlü ama yavaş 2
+    ENEMY_TYPE_COUNT    // kaç tane düşman türü var otomatik 3 oluyor üste bir tane daha tür eklersek otomatik 4 olucak
 }EnemyType;
 
 
@@ -185,9 +186,10 @@ typedef struct{
 
 typedef struct{
     Texture2D playerTexture;    //  oyuncu texture ü
-    Texture2D enemyTextures[ENEMY_TYPE_COUNT];  //  
+    Texture2D enemyTextures[ENEMY_TYPE_COUNT];  //  düşman texture leri
     Texture2D bulletTexture;    //  mermi texture ü
     Texture2D gemTexture;   //  gem texture ü
+    Texture2D floorTexture; //  zemin texture ü 
 } GameAssets;
 
 

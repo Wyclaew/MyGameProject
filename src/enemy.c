@@ -38,26 +38,23 @@ const EnemyDef ENEMY_DEFS[ENEMY_TYPE_COUNT] = {
 void Enemy_Init(GameData *game){
     //  tüm düşmanlar başlangıçta kapalı olucak
     for (int i = 0; i < MAX_ENEMIES; i++){
-
-
-        game->enemies[i].scale = 1.0f;
-        game->enemies[i].currentFrame = 0;
-        game->enemies[i].active = false;
+        game->enemies[i].scale = 1.0f;  //  düşman büyüklüğü ölçeği
+        game->enemies[i].active = false;    //  aktifliğini sıfırlıyoruz
 
          //  animasyon başlangıç ayarları
-        game->enemies[i].currentFrame = 0;
-        game->enemies[i].frameCounter = 0;
-        game->enemies[i].facingRight = true;
+        game->enemies[i].currentFrame = 0;  //  o anki frame ini sıfırlıyoruz
+        game->enemies[i].frameCounter = 0;  //  frame sayacını sıfırlıyoruz
+        game->enemies[i].facingRight = true;    //  yön kontolcüsünü sıfırlıyoruz
 
-        //  can vs.
-        EnemyType selectedType = ENEMY_BASIC;
-        const EnemyDef *def = &ENEMY_DEFS[selectedType];
-        game->enemies[i].health = def->baseHealth;
-        game->enemies[i].maxHealth = def->baseHealth;
-        game->enemies[i].type = selectedType;
-        game->enemies[i].xpReward = def->xpValue;
+        //  alttaki rastgele düşman seçicide hata çıkarsa oyunun çökmemesi için   
+        EnemyType selectedType = ENEMY_BASIC;   //  default olarak tüm düşmanlar basic yapıyoruz
+        const EnemyDef *def = &ENEMY_DEFS[selectedType];    //  yukarıdaki tablodan düşman verilerini çekmek için isim kısaltması yapıyoruz
+        game->enemies[i].health = def->baseHealth;  //  düşman canını seçilen düşman tipinin canı olarak güncelliyoruz
+        game->enemies[i].maxHealth = def->baseHealth;   //  ilerisi için düşmanları giderek güçlendirme vs
+        game->enemies[i].type = selectedType;   //  yine ilerisi için düşman tipi ataması yapıyoruz
+        game->enemies[i].xpReward = def->xpValue;   //  düşman ölünce çıkacak xp değeri
 
-        Spatial_Clear();
+        Spatial_Clear();    //  düşman çarpışmaları için olan ızgarayı temizliyoruz
         
     }
 }
@@ -306,7 +303,7 @@ void Enemy_PushAwayFromPlayer(GameData *game, float safeRadius) {
     for (int i = 0; i < MAX_ENEMIES; i++){
         if(!game->enemies[i].active) continue;
 
-        //  oyuncuya olan mesafeyi ölç
+        //  düşmanın oyuncuya olan mesafesini ölç
         float dx = game->enemies[i].pos.x - game->player.pos.x;
         float dy = game->enemies[i].pos.y - game->player.pos.y;
         float dist = sqrt(dx * dx + dy * dy);

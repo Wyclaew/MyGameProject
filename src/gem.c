@@ -8,13 +8,12 @@
 
 
 void Gem_Init(GameData *game){
-
     for (int i = 0; i < MAX_GEM; i++){
-        if(!game->gems[i].active) continue;
-        game->gems[i].active = false;
-        game->gems[i].rotation = 0.0f;
-        game->gems[i].isMagnetized = false;
-        game->gems[i].texture = game->assets.gemTexture;
+        if(!game->gems[i].active) continue; //  aktif gemleri buluyoruz
+        game->gems[i].active = false;   //  pasif konuma getiriyoruz
+        game->gems[i].rotation = 0.0f;  //  dönme açısını sıfırlıyoruz 
+        game->gems[i].isMagnetized = false; //  çekilirken oyun bien gem varsa onları sıfırlıyoruz
+        game->gems[i].texture = game->assets.gemTexture;    //  texturlerini yüklüyoruz
     }
 }
 
@@ -25,9 +24,7 @@ void Gem_UpdateGems(GameData *game, float dt){
         //  gem aktif değilse döngüye girme
         if(!game->gems[i].active) continue;
 
-        //  sürekli yavaşça dönsün
-        game->gems[i].rotation += 2.0f * dt;
-
+        //  oyuncunun ve gemin arasındaki mesafe
         float distance = Vector2Distance(game->gems[i].pos, game->player.pos);
 
         //  oyuncu taşı topladı mı
@@ -36,7 +33,7 @@ void Gem_UpdateGems(GameData *game, float dt){
         float dist = sqrt(dx * dx + dy * dy);
 
         //  oyuncuya doğru çekilme manyetiklik efekti
-        if(dist < 150) {
+        if(distance < 150) {
             game->gems[i].pos.x += (dx / dist) * 5.0f;
             game->gems[i].pos.y += (dy / dist) * 5.0f;
             game->gems[i].isMagnetized = true;
@@ -47,7 +44,7 @@ void Gem_UpdateGems(GameData *game, float dt){
         }
 
         //  toplama anı
-        if(dist < game->player.radius) {
+        if(distance < game->player.radius) {
             game->gems[i].active = false;   //  xp yi yoket
             game->currentXP += game->gems[i].value; //  mevcut xp ye alınan xp değeri kadar ekle
 
@@ -60,14 +57,15 @@ void Gem_UpdateGems(GameData *game, float dt){
 
 void Gem_SpawnGem(GameData *game, Vector2 position, int value){
     for (int i = 0; i < MAX_GEM; i++){
+        //  gem havuzundan aktif olmayan bir gem buluyoruz
         if(!game->gems[i].active){
-            game->gems[i].active = true;
-            game->gems[i].pos = position;
-            game->gems[i].value = value;
-            game->gems[i].rotation = 0.0f;
-            game->gems[i].isMagnetized = false;
-            game->gems[i].texture = game->assets.gemTexture;
-            break;
+            game->gems[i].active = true;    //  gemi aktifleştiriyoruz
+            game->gems[i].pos = position;   //  gemin spawn pozisyonunu belirliyoruz
+            game->gems[i].value = value;    //  gem in değeri ne kadar olucak
+            game->gems[i].rotation = 0.0f;  //  gem in dönme açısı görsel efektler vs için
+            game->gems[i].isMagnetized = false; //  gem aktif şekilde oyuncuya doğru çekiliyor mu
+            game->gems[i].texture = game->assets.gemTexture;    //  gem textur ünü yüklüyoruz
+            break;  //  bir tane gem spawn edip çıkıyoruz
         }
     }
     

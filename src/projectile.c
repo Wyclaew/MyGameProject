@@ -65,9 +65,9 @@ void Projectile_UpdateBullet(GameData *game, float dt){
 
                     Projectile_UpdateAnimation(&game->bullets[i], game->assets.bulletTexture.width);
 
+                    //  mermi ve düşman çarpışması kontrol etme fonksiyonu
+                    Collisions_BulletEnemy(game);
             }
-                //  mermi ve düşman çarpışması kontrol etme fonksiyonu
-            Collisions_BulletEnemy(game);   
 }
 
 

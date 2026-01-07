@@ -16,16 +16,16 @@ void UI_InitLayout(GameData *game){
     int sw = GetScreenWidth();
     int sh = GetScreenHeight();
 
-float leftColX = sw * 0.05f;    // Soldan %5 boşluk
-    float btnWidth = sw * 0.25f;    // Ekranın %25'i genişlik
-    float btnHeight = sh * 0.08f;   // Ekranın %8'i yükseklik
-    float gap = sh * 0.02f;         // Butonlar arası boşluk
-    float startY = sh * 0.45f;      // Başlama yüksekliği
+    float leftColX = sw * 0.05f;    //  soldan %5 boşluk
+    float btnWidth = sw * 0.25f;    //  ekran genişliğinin %25 i genişlik
+    float btnHeight = sh * 0.08f;   //  ekran yüksekliğinin %8 i yükseklik
+    float gap = sh * 0.02f;         //  butonlar arası boşluk
+    float startY = sh * 0.45f;      //  çizmeye başlanama yüksekliği
 
-    // Başlık Pozisyonu
+    //  başlık pozisyonu
     game->uilayout.titlePos = (Vector2){ leftColX, startY - (sh * 0.15f) }; 
 
-    // Dikdörtgen (Hitbox) Hesapları
+    //  butonarın hitboxları
     game->uilayout.playButton = (Rectangle){ leftColX, startY, btnWidth, btnHeight };
     game->uilayout.settingsButton = (Rectangle){ leftColX, startY + (btnHeight + gap), btnWidth, btnHeight };
     game->uilayout.exitButton = (Rectangle){ leftColX, startY + (2 * (btnHeight + gap)), btnWidth, btnHeight };
@@ -36,18 +36,18 @@ float leftColX = sw * 0.05f;    // Soldan %5 boşluk
 
     //  github butonu
     game->uilayout.githubButton = (Rectangle){ 
-        leftColX,                // Sol sütun hizası
-        sh - sBtnSize - margin,  // Ekranın en altından yukarıda
-        sBtnSize, 
-        sBtnSize 
+        leftColX,                // sol sütun hızasında
+        sh - sBtnSize - margin,  // ekranın en altından biraz yukarıda
+        sBtnSize * 1.5f,    //  buton genişliği 
+        sBtnSize    //  buton yüksekliği
     };
 
     //  mute button
     game->uilayout.muteButton = (Rectangle){ 
-        leftColX + sBtnSize + 10,   //  githubın bittiği yerden 10 pixel sağda
+        leftColX + sBtnSize * 1.5f,   //  githubın bittiği yerden 10 pixel sağda
         sh - sBtnSize - margin, //  aynı hizada
-        sBtnSize, 
-        sBtnSize 
+        sBtnSize * 1.5f,    //  buton genişliği
+        sBtnSize    //  buton yüksekliği
     };
 }
 
@@ -69,13 +69,17 @@ void UI_DrawMenu(const GameData *game){
     DrawResponsiveButton(game->uilayout.exitButton, "QUIT", 30, BLACK);
     
     //  ikonların çizimi
+    //  github butonu
     DrawRectangleRec(game->uilayout.githubButton, BLUE);
-    DrawText(" GIT", (int)game->uilayout.githubButton.x + 5, (int)game->uilayout.githubButton.y + 10, 20, WHITE);
-    
+    DrawResponsiveButton(game->uilayout.githubButton, "GIT", 20, LIGHTGRAY);
+    UI_DrawCenteredText("GIT", game->uilayout.githubButton, 20, WHITE);
+
+    //  mute butonu
     Color muteColor = game->settings.isMuted ? RED : GREEN;
     DrawRectangleRec(game->uilayout.muteButton, muteColor);
-    DrawText(game->settings.isMuted ? "OFF" : "ON", (int)game->uilayout.muteButton.x + 10, (int)game->uilayout.muteButton.y + 10, 20, WHITE);
+    DrawResponsiveButton(game->uilayout.muteButton, game->settings.isMuted ? "OFF" : "ON", 20, LIGHTGRAY);
 
+    UI_DrawCenteredText(game->settings.isMuted ? "OFF" : "ON", game->uilayout.muteButton, 20, muteColor);
 
     //  orta sütun karakter preview
     Texture2D pTex = game->assets.playerTexture;
@@ -122,7 +126,7 @@ void UI_DrawMenu(const GameData *game){
     DrawRectangleLinesEx(scoreBox, 2, DARKGRAY);
     
     // başlık
-    DrawText("TOP HUNTERS", (int)scoreBox.x + 20, (int)scoreBox.y - 30, 25, GOLD);
+    DrawText("TOP HUNTERS", (int)scoreBox.x, (int)scoreBox.y - 30, 25, GOLD);
     
     //  scroll bar
     DrawRectangle((int)(scoreBox.x + scoreBox.width - 5), (int)scoreBox.y, 5, (int)scoreBox.height, Fade(GRAY, 0.3f));
@@ -168,19 +172,20 @@ void UI_DrawMenu(const GameData *game){
 
 
 void UI_UpdateMenu(GameData *game){
-    UI_InitLayout(game);
-
     Vector2 mousePoint = GetMousePosition();
 
+    //  eğer mouse pozisyonu play butonuyla çakışıyorsa ve sol mouse butonuna basıldıysa oyunu başlat
     if(CheckCollisionPointRec(mousePoint, game->uilayout.playButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
         Game_Reset(game);
         game->currentState = GAMEPLAY;
     }
 
+    //  eğer mouse pozisyonu settings butonuyla çakışıyorsa ve sol mouse butonuna basıldıysa oyun durumunu ayarlara al
     if(CheckCollisionPointRec(mousePoint, game->uilayout.settingsButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
         game->currentState = SETTINGS;
     }
 
+    //  eğer mouse pozisyonu ve exit butonu pozisyonları çakışıyorsa ve sol mouse butonuna basıldıysa oyun penceresini kapat
     if(CheckCollisionPointRec(mousePoint, game->uilayout.exitButton) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
         CloseWindow();
     }
@@ -193,9 +198,9 @@ void UI_UpdateMenu(GameData *game){
     // listenin toplam piksel yüksekliği
     // eksi görünen skor kutusunun yüksekliği
     // böylece listenin en altı görününce durur
-    float visibleHeight = sh * 0.60f;
+    float visibleHeight = sh * 0.62f;
     float contentHeight = MAX_HIGHSCORE * 40.0f;
-    float maxScroll = contentHeight - visibleHeight + 20;
+    float maxScroll = contentHeight - visibleHeight + 13.0f;
 
     //  eğer liste kutudan küçükse kaydırmaya gerek yok
     if (maxScroll < 0) maxScroll = 0;
@@ -204,7 +209,7 @@ void UI_UpdateMenu(GameData *game){
     float wheel = GetMouseWheelMove();
     if (wheel != 0) {
         //  kullanıcı tekerleği kaydırıyorsa
-        game->scoreScrollOffset -= wheel * 30.0f;
+        game->scoreScrollOffset -= wheel * SCROLL_SPEED;
         
         //  sınırla
         if (game->scoreScrollOffset < 0) game->scoreScrollOffset = 0;
@@ -217,13 +222,14 @@ void UI_UpdateMenu(GameData *game){
         //  otomatik kaydırma
         if (game->isScrollingDown) {
             //  yavaşça aşağı in
-            game->scoreScrollOffset += 30.0f * dt; // Hız: 30px/sn
+            game->scoreScrollOffset += (SCROLL_SPEED - 15.0f) * dt;   //  yavaşça inmez hızı 
 
             //  listenin sonuna geldi mi
             if (game->scoreScrollOffset >= maxScroll) {
                 game->scoreScrollOffset = maxScroll; // sınırda tut
                 //  belki biraz beklenip geri sarılabilir
                 game->isScrollingDown = false; //   yönü değiştir
+                
             }
         } 
         else {
@@ -312,7 +318,7 @@ void UI_DrawSettings(const GameData *game){
 
 void UI_UpdateSettings(GameData *game){
     //  kaydırıcı bar yapımı
-Vector2 mouse = GetMousePosition();
+    Vector2 mouse = GetMousePosition();
     
     //  panel ve slider konumları draw fonksiyonu ile aynı olmalı
     int sw = GetScreenWidth();
@@ -337,7 +343,7 @@ Vector2 mouse = GetMousePosition();
 
     //  slider mantığı
     if(IsMouseButtonDown(MOUSE_LEFT_BUTTON)){
-if(mouse.x >= sliderRect.x && mouse.x <= sliderRect.x + sliderRect.width &&
+        if(mouse.x >= sliderRect.x && mouse.x <= sliderRect.x + sliderRect.width &&
            mouse.y >= sliderRect.y - 10 && mouse.y <= sliderRect.y + sliderRect.height + 10){
             
             float value = (mouse.x - sliderRect.x) / sliderRect.width;
@@ -359,10 +365,11 @@ if(mouse.x >= sliderRect.x && mouse.x <= sliderRect.x + sliderRect.width &&
 void UI_DrawGameplay(const GameData *game){
 
     //  debug ekranı
-    UI_DrawDebugInfo(game);
+    //UI_DrawDebugInfo(game);
 
     //  skor tablosu
-    DrawText(TextFormat("SCORE : %i", game->score), 1000, 40, 20, GOLD); 
+    DrawText(TextFormat("SCORE : %i", game->score), SCREEN_WIDTH - MeasureText(TextFormat("SCORE : %i", game->score), 60) + 100, 40, 35, GOLD); 
+    
 
     //  xp barı
     UI_DrawXPBar(game);
@@ -433,7 +440,7 @@ void UI_DrawGameOver(const GameData *game){
 
 
 void UI_DrawDebugInfo(const GameData *game){
-            DrawText("Hareket için W, A, S, D", 10, 100, 20, LIGHTGRAY);
+            DrawText("Hareket için W, A, S, D", 10, 120, 20, LIGHTGRAY);
 
             //  debug ekranı ekleme
 
@@ -452,30 +459,40 @@ void UI_DrawDebugInfo(const GameData *game){
 
             char debugText[100];
             
-            // sprintf(debugText, "Fps : %d  |  Mermiler : %d  |  Dusmanlar : %d", fps, activeBullets, activeEnemies);
-            sprintf(debugText, "pos : %.0f, %.0f | FPS : %d | Bullet : %d | Enemy : %d | speed : %.0f | health : %.0f", game->player.pos.x, game->player.pos.y, fps, activeBullets, activeEnemies, game->player.speed, game->player.health);
+            //  debug yazısı
+            sprintf(debugText, "pos : %.0f, %.0f | FPS : %d | Bullet : %d | Enemy : %d | speed : %.0f | health : %.0f | cooldown : %.0f ", 
+                game->player.pos.x, 
+                game->player.pos.y, 
+                fps, 
+                activeBullets, 
+                activeEnemies, 
+                game->player.speed, 
+                game->player.health,
+                game->shootCooldown
+                );
             DrawText(debugText, 10, 90, 20, GREEN);
 }
 
 
 
 void UI_DrawHighScores(const GameData *game){
-                DrawText("TOP 10", 350, 50, 30, GOLD);
-            for (int i = 0; i < MAX_HIGHSCORE; i++){
-                DrawText(TextFormat("%i. %s  %i", i+1, game->highScores[i].player_name, game->highScores[i].score), 300, 100 + (i*40), 20, DARKBROWN);
+                 DrawText("TOP 10", 350, 50, 30, GOLD);
+             for (int i = 0; i < MAX_HIGHSCORE; i++){
+                 DrawText(TextFormat("%i. %s  %i", i+1, game->highScores[i].player_name, game->highScores[i].score), 300, 100 + (i*40), 20, DARKBROWN);
             }
             DrawText("B For Back", 350, 550, 20, GRAY);
     
 }
 
+//  mouse konumuna duyarlı buton yapmak için yardımcı fonksiyon
 void DrawResponsiveButton(Rectangle rect, const char* text, int fontSize, Color baseColor){
     Vector2 mouse = GetMousePosition();
     bool isHover = CheckCollisionPointRec(mouse, rect);
 
     // hover ise rengi aç ve biraz büyütmüş gibi göster (border ekle)
     if (isHover) {
-        DrawRectangleRec(rect, ColorBrightness(baseColor, 0.2f)); // %20 daha parlak
-        DrawRectangleLinesEx(rect, 3, GOLD); // Altın çerçeve
+        DrawRectangleRec(rect, ColorBrightness(baseColor, 0.2f)); //    %20 daha parlak
+        DrawRectangleLinesEx(rect, 3, GOLD); // altın çerçeve
     } else {
         DrawRectangleRec(rect, baseColor);
     }
@@ -530,7 +547,7 @@ void UI_DrawXPBar(const GameData *game){
 
     //  level yazısı
     const char* levelText = TextFormat("LEVEL : %d", game->level);
-    int fontSize = (int)(sh * 0.02f);
+    int fontSize = (int)(sh * 0.03f);
     
     //  yazının ekrandaki genişkiği
     int textWidth = MeasureText(levelText, fontSize);
@@ -538,7 +555,7 @@ void UI_DrawXPBar(const GameData *game){
     int posY = (int)(barHeight + 5);
 
     // çiz
-    DrawText(levelText, posX, posY, fontSize, GOLD);
+    DrawText(levelText, posX - 20, posY, fontSize, GOLD);
 }
 
 

@@ -13,13 +13,13 @@
 //  programın başladığı yer
 int main(void){
     //  işletim sisteminden grafik belleği isteme
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Phase 14: Dynamic Spawning & Enemy Types");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Bug fixes and general improvements");
     SetTargetFPS(60);   //  fps limitleme
 
     //  esc tuşunun pencereyi kapatma özelliğini devre dışı bıraktık
     SetExitKey(0);
 
-    //  random seed
+    //  üretilen random sayıların örüntü oluşturmasını bozmak için
     SetRandomSeed(time(NULL));
     
     //  oyun verilerini başlat
@@ -31,6 +31,9 @@ int main(void){
     //  oyun döngüsü
     while(!WindowShouldClose()){
         float dt = GetFrameTime();  //  geçen süre(delta time)
+
+        //  f11 ile tam ekrana alma
+        if(IsKeyPressed(KEY_F11)) ToggleFullscreen();
 
         //  oyun mantığı (her state için ayrı)
         Game_Update(&game, dt);

@@ -9,7 +9,8 @@
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <time.h>
 
 
 
@@ -20,18 +21,20 @@ void Game_Init(GameData *game){
     //  oyun başlangıç değerleri
     game->currentState = MENU;  //  başlangıçta hangi menüde olucak
     game->spawnInterval = INITIAL_SPAWN_INTERVAL - 20.0f; //  oyun zorluk değeri
-    game->shootCooldown = 0.8f; //  atış hızımız
-    game->enemyWaveSize = 2;    //  başlangıçta 5 düşman 
+    game->shootCooldown = 1.0f; //  atış hızımız
+    game->enemyWaveSize = 2;    //  başlangıçta kaç düşman gelicek 
     game->assets.playerTexture = LoadTexture("player_cat_walk.png");
     game->assets.enemyTextures[ENEMY_BASIC] = LoadTexture("enemy_basic.png");
     game->assets.enemyTextures[ENEMY_RUSHER] = LoadTexture("enemy_rusher.png");
     game->assets.enemyTextures[ENEMY_TANK] = LoadTexture("enemy_tank.png");
     game->assets.bulletTexture = LoadTexture("bullet_fired.png");
     game->assets.gemTexture = LoadTexture("xp_gem.png");
-    game->requiredXP = 100;
-    game->level = 1;
-    game->currentXP = 0;
-    game->isScrollingDown = true;   //  skor tablosu aşağı doğru kayıyor
+    game->assets.floorTexture = LoadTexture("floor1.png");
+    SetTextureWrap(game->assets.floorTexture,TEXTURE_WRAP_REPEAT);  //  texture ün bittiği yerden tekrarlanmasını sağlar
+    game->requiredXP = 100; //  seviye atlamak için başlangıçta gereken xp
+    game->level = 1;    //  başlangıç leveli
+    game->currentXP = 0;    //  başlangıçta sahip olduğumuz xp
+    game->isScrollingDown = true;   //  skor tablosu aşağı doğru kayıyor mu kontrolü
 
     //  ses ayarları
     game->settings.masterVolume = 1.0f; //  ana ses seviyesi
@@ -40,10 +43,10 @@ void Game_Init(GameData *game){
     game->settings.isMuted = false; //  menüdeki ses kapatma butonu durumu
 
     //  kamera ayarları
-    game->camera.target = (Vector2){0, 0};
-    game->camera.offset = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};
-    game->camera.rotation = 0.0f;
-    game->camera.zoom = 1.0f;
+    game->camera.target = (Vector2){0, 0};  //  kameranın ilk başta bakacağı pozisyon
+    game->camera.offset = (Vector2){SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2};   //  kameranın odaklanacağı nokta
+    game->camera.rotation = 0.0f;   //  kameranın dönüş açısı
+    game->camera.zoom = 1.0f;   //  yakınlaştırma ölçeği şuan 1 e 1
 
 
     //  texture yükleme kontrolü
@@ -74,15 +77,11 @@ void Game_Init(GameData *game){
 
     //  düşmanları hazırla
     Enemy_Init(game);
-
 }
 
 
 
 void Game_Update(GameData *game, float dt){
-
-    UI_InitLayout(game);
-
     switch(game->currentState){
             case MENU:
             UI_UpdateMenu(game);
@@ -124,6 +123,7 @@ void Game_Update(GameData *game, float dt){
 
 
 void Game_Draw(const GameData *game){
+
         //  çizmeye başla
          BeginDrawing();
 
@@ -199,13 +199,13 @@ Vector2 Game_GetSafeSpawnPosition (Vector2 playerPos, float minDistance){
 
 
 void Game_ShootingSystem(GameData *game, float dt){
-    //  oto saldırı mantığı en yakındakini bulup ateş et
 
+    //  oto saldırı mantığı en yakındakini bulup ateş et
             game->shootTimer += dt;   //  sayacı arttırma
             
              //  en yakın düşmanı bul
             if(game->shootTimer >= game->shootCooldown){
-                int nearestEnemyIndex = -1; //  henüz düşman bulunmadı (-1 geçersiz sayı)
+                int nearestEnemyIndex = -1; //  en yakın düşman kimliği, henüz düşman bulunmadı (-1 geçersiz sayı)
                 float minDistance = 9999999.0f; //  başlangıçta en kısa mesafeyi çok büyük yapıyoruz
                 for (int i = 0; i < MAX_ENEMIES; i++){  //  sadece aktif ve varsayılan düşmanlara bakacağız
                     if(!game->enemies[i].active) continue;
@@ -254,8 +254,8 @@ void Game_WaveSpawner(GameData *game, float dt){
             game->spawnInterval *= 0.99f;
 
             //  oyun zorluğuna minimum limit
-            if(game->spawnInterval < 0.5f){
-                game->spawnInterval = 0.5f;
+            if(game->spawnInterval < 15.0f){
+                game->spawnInterval = 15.0f;
             }
             
         }
@@ -268,26 +268,39 @@ void Game_UpdateGameOver(GameData *game){
     //  eğer yeni bi yüksek skor varsa isim girişi bekle
     if (game->isNewHighScore){
         //  karakter yakalama mantığı
+        //  getcharpressed o karede basılan tuşun ASCII kodunu verir
         int key = GetCharPressed();
+
+        //  tuşlara çok hızlı basılırken de algılayabilmek için while kullanıyoruz
         while (key > 0) {
-            if ((key >= 32) && (key <= 125) && (game->letterCount < 10)){   //  sadece yazılabilir karakterleri alıcaz
+
+            //  32 125 aralığı ASCII tablosunda yazılabilir karakterlerdir
+            if ((key >= 32) && (key <= 125) && (game->letterCount < 10)){   //  ve isim kutudan taşmasın diye 10 karakter sınırı koyuyoruz
                 game->inputName[game->letterCount] = (char) key;
-                //  her harf eklendiğinde \0 (string sonlandırıcı) eklenerek c dilinin metni nerede bitireceğini bilmesi sağlıyoruz
+                //  \0 (string sonlandırıcı) eklenerek c dilinin metni nerede bitireceğini bilmesi sağlıyoruz
                 game->inputName[game->letterCount+1] ='\0';
                 game->letterCount++;
             }
             key = GetCharPressed(); //  sıradaki tuşu al
         }
+
         //  harf silme (backspace)
         if (IsKeyPressed(KEY_BACKSPACE)){
             game->letterCount--;
             if (game->letterCount < 0) game->letterCount = 0;
+
+            //  geri geldiğimiz noktaya hemen \0 koyarız ki önceki harf artık okunmasın
             game->inputName[game->letterCount] = '\0';
         }
+
         //  ismi kaydetme
         if (IsKeyPressed(KEY_ENTER) && game->letterCount > 0){
+
             //  skoru listeye ekle ve kaydet
+            //  yeni skoru direkt listenin sonuna yazıyoruz ama zaten birazdan sıralanacak
             game->highScores[MAX_HIGHSCORE -1].score = game->score;  //  globl skor değişkeni
+
+            //  high score içindeki player name dizine girilen ismi kopyalıyoruz
             TextCopy(game->highScores[MAX_HIGHSCORE-1].player_name, game->inputName);
 
             //  skor sırlama (bubble sort) listeyi tarayarak en yükseği 0. indekse çıkarıyoruz
@@ -300,6 +313,7 @@ void Game_UpdateGameOver(GameData *game){
                     }
                 }
             }
+
             //  yeni listeyi kalıcı olarak kaydediyoruz
             Game_SaveHighScores(game);
             game->isNewHighScore = false;
@@ -360,15 +374,21 @@ void Game_LoadHighScores(GameData *game){
     if(scoreFile == NULL){
         //  dosya yoksa listeyi sıfırla 
         for (int i = 0; i < MAX_HIGHSCORE; i++){
+            //  skorların hepsini 0 a eşitliyoruz
             game->highScores[i].score = 0;
+
+            //  tüm isimlerin yerine ------- koyuyoruz
             TextCopy(game->highScores[i].player_name, "---- "); 
         }
         return;
     }
     //  tüm diziyi tek seferde oku
+    //  1. veri nerede
+    //  2. her okumada kaç byte atlayacağım yani 1 blok kaç byte
+    //  3. bu bloklardan kaç tane okuyayım
+    //  4. hangi kaynaktan okuyacağım
     fread(game->highScores, sizeof(HighScore), MAX_HIGHSCORE, scoreFile);
     fclose(scoreFile);
-
 }
 
 
@@ -376,7 +396,11 @@ void Game_LoadHighScores(GameData *game){
 void Game_SaveHighScores(const GameData *game){
     //  rb yi kullanabilmek için direkt wb şekilde yazmamız gerekiyor
     FILE *scoreFile = fopen("high_scores.dat", "wb");
+
+    //  dosya başarılı şekilde açıldıysa
+    //  bu kontolü yapmadan dosyaya bişeyler yazmaya çalışırsak program çökebilir
     if(scoreFile != NULL){
+        //  1. den veriyi al, 2. her bir skor paketi boyutu, 3. kaç paket yazılacak, 4. hangi dosyaya yazılacak
         fwrite(game->highScores, sizeof(HighScore), MAX_HIGHSCORE, scoreFile);
         fclose(scoreFile);
     }
@@ -407,22 +431,42 @@ void Game_Cleanup(GameData *game){
     
     UnloadTexture(game->assets.bulletTexture);
     UnloadTexture(game->assets.gemTexture);
+    UnloadTexture(game->assets.floorTexture);
 }
 
 
 void Game_GenerateUpgrades(GameData *game){
-    for (int i = 0; i < 3; i++){
-        //  havuzdan rastgele bir kart sç
-        int randomIndex = GetRandomValue(0, UPGRADE_POOL_SIZE -1);
-        game->activeUpgrades[i] = upgradePool[randomIndex];
+
+    //  sayıları karıştırmak için geçici dizi
+    int randomize[UPGRADE_POOL_SIZE];
+
+    //  diziyi doldur
+    for (int i = 0; i < UPGRADE_POOL_SIZE; i++){
+        randomize[i] = i;
     }
     
+    //  random 3 farklı kart seç
+    //  diziyi karıştır 
+    for (int i = 0; i < UPGRADE_POOL_SIZE; i++){
+        int randomPos = GetRandomValue(0, UPGRADE_POOL_SIZE - 1);
+
+        //  sayıların yerlerini değişiriyoruz
+        int temp = randomize[i];
+        randomize[i] = randomize[randomPos];
+        randomize[randomPos] = temp;
+    }
+    
+
+    for (int i = 0; i < 3; i++){
+        int selectedID = randomize[i];
+        game->activeUpgrades[i] = upgradePool[selectedID];
+    }    
 }
 
 
 //  hız ekleme yardımcı fonksiyonu
 void Game_ApplyMoveSpeed(Player *player, float percentage){
-    player->speed += (1.0f * percentage);
+    player->speed += (player->speed * percentage);
 
     //  yürüme hızını limitle
     if(player->speed > MAX_PLAYER_SPEED) player->speed = MAX_PLAYER_SPEED;
@@ -455,15 +499,15 @@ void Game_ApplyUpgrade(GameData *game, int index){
     }
 }
 
-// Sadece oyun dünyasındaki varlıkları çizer (UI YOK)
+//  sadece oyun dünyasındaki varklıkları çizer
 void Game_DrawWorld(const GameData *game) {
     //  kamerayı aç
     BeginMode2D(game->camera);
 
-        // zemin (ileride buraya resim gelecek)
-        DrawGrid(100, 50.0f); 
+        //  zemin çizimi
+        Game_DrawFloor(game);
 
-        // Objeler
+        //  objeler
         Gem_DrawGem(game);
         Projectile_DrawBullet(game);
         Enemy_Draw(game);
@@ -473,9 +517,9 @@ void Game_DrawWorld(const GameData *game) {
 }
 
 void Game_CheckLevelUp(GameData *game) {
-                //  level atlama kontrolü
+            //  level atlama kontrolü
             if(game->currentXP >= game->requiredXP){
-                game->level++;
+                game->level++;  //  leveli arttır
                 game->currentXP -= game->requiredXP; //  artan leveli sonraki levele aktarma
                 game->requiredXP = (int)game->requiredXP * XP_INTERVAL; //  level atlamayı zorlaştır
 
@@ -485,4 +529,36 @@ void Game_CheckLevelUp(GameData *game) {
                 // buraya level atlama ödülü olarak can yinelem veya başka bişey gelebilir
                 //  level atlama sesi de gelebilir
             }
+}
+
+
+void Game_DrawFloor(const GameData *game) {
+    Texture2D floorTexture = game->assets.floorTexture;
+
+    //  resmin hangi parçalarını alıyoruz ?(source)
+    //  x ve y değerlerini oyunucun konumuna eşitlersek desen hareket eder
+    Rectangle source = {
+        game->player.pos.x,
+        game->player.pos.y,
+        (float)SCREEN_WIDTH,
+        (float)SCREEN_HEIGHT
+    };
+
+    //  ekranda nereye çiziyorsun yani hedef neresi(dest)
+    //  oyuncuyu hep ortaladığımız için zemini de oyunucunun etrafına kuruyoruz
+    Rectangle dest = {
+        game->player.pos.x,
+        game->player.pos.y,
+        (float)SCREEN_WIDTH,
+        (float)SCREEN_HEIGHT
+    };
+
+    //  merkezi ayarlıyoruz ki tam otursun
+    Vector2 origin = {
+        (float)SCREEN_WIDTH / 2.0f,
+        (float)SCREEN_HEIGHT / 2.0f
+    };
+
+    //  çizim   (resim çok parlaksa renk yerine lightgray yazılabilir)
+    DrawTexturePro(floorTexture, source, dest, origin, 0.0f, WHITE);
 }
